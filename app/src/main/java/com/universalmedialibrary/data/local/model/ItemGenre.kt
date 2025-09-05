@@ -19,7 +19,8 @@ import androidx.room.ForeignKey
             childColumns = ["genreId"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [androidx.room.Index(value = ["genreId"])]
 )
 data class ItemGenre(
     val itemId: Long,

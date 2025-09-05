@@ -30,7 +30,7 @@ interface MetadataDao {
     suspend fun insertItemGenre(itemGenre: ItemGenre)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPerson(people: People)
+    suspend fun insertPerson(people: People): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItemPersonRole(itemPersonRole: ItemPersonRole)

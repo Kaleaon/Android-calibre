@@ -13,7 +13,8 @@ import androidx.room.PrimaryKey
             childColumns = ["libraryId"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [androidx.room.Index(value = ["libraryId"])]
 )
 data class MediaItem(
     @PrimaryKey(autoGenerate = true)

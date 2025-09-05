@@ -19,7 +19,8 @@ import androidx.room.PrimaryKey
             childColumns = ["albumId"],
             onDelete = ForeignKey.SET_NULL // If an album is deleted, we don't want to delete the track
         )
-    ]
+    ],
+    indices = [androidx.room.Index(value = ["albumId"])]
 )
 data class MetadataMusicTrack(
     @PrimaryKey

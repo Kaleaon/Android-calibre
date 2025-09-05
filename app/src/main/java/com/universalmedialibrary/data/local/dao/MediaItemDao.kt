@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 interface MediaItemDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMediaItem(mediaItem: MediaItem)
+    suspend fun insertMediaItem(mediaItem: MediaItem): Long
 
     @Query("SELECT * FROM media_items WHERE libraryId = :libraryId ORDER BY dateAdded DESC")
     fun getMediaItemsForLibrary(libraryId: Long): Flow<List<MediaItem>>
