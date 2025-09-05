@@ -16,9 +16,9 @@ The goal is to create a new, fully self-contained, native Android application fo
 
 ---
 
-## 3. Research Summary & Final Architecture
+## 3. Research Summary & Final Architecture (REVISED)
 
-An extensive research phase was conducted to determine the best architecture and components for this project.
+An extensive research and planning phase was conducted to determine the best architecture and components for this project. This section reflects the **revised architecture** based on our detailed investigation.
 
 ### Final Proposed Architecture (On-Device)
 
@@ -26,63 +26,82 @@ The project direction has been finalized. A **fully self-contained, on-device ap
 
 1.  **Core Concept:** The application will be a native Android app that directly reads and manages a user's media library, which will be stored on the device's local storage.
 
-2.  **Database Layer:** A new data layer will be built in **Kotlin** using standard Android SQLite libraries. It will be responsible for all database operations based on a custom, extensible schema designed for multiple media types.
+2.  **Database Layer:** A new data layer will be built in **Kotlin** using standard Android SQLite libraries. It will be responsible for all database operations based on a custom, extensible schema designed for multiple media types. This layer will also handle the **advanced import and data cleaning of Calibre `metadata.db` files**.
 
-3.  **Reader Component (KOReader):**
-    *   The app will integrate the **KOReader** project as its reading engine for e-books and comics.
-    *   **License:** This choice mandates that the final application must be licensed under the **AGPL-3.0**.
-    *   **Feature Benchmark:** The feature set of **Moon+ Reader** will be used as a benchmark for quality and customization options to be added to the KOReader base.
+3.  **Reader Component (epub4j):**
+    *   The app will use the **`epub4j`** library as its core engine for parsing and handling e-book files.
+    *   **License:** This library is licensed under the permissive **Apache 2.0 license**, which aligns with our project's FOSS goals without the restrictions of AGPL.
+    *   **Feature Benchmark:** The feature set of **Moon+ Reader** will still be used as a benchmark for the quality and customization options to be built for the reading experience.
 
 4.  **Audio Component (AntennaPod Model):**
     *   A dedicated audio player for music and audiobooks will be built, using the architecture of the **AntennaPod** project as a blueprint.
 
 5.  **Video Component (ExoPlayer or libvlc):**
-    *   The app will use a robust video playback engine. The default choice is **AndroidX Media3 (ExoPlayer)**. The powerful **libvlc** engine is a potential alternative to be considered during implementation.
+    *   The app will use a robust video playback engine. The default choice is **AndroidX Media3 (ExoPlayer)**.
 
 6.  **UI/UX (Jetpack Compose & Material You):**
     *   The UI will be a modern, native Android interface built with **Kotlin** and **Jetpack Compose**.
     *   The design will be inspired by **`book-story`** (for its Material You aesthetic) and **`Plexoid`** (for its multi-library organizational concepts).
 
-### External Metadata Sources
+### Advanced Metadata Strategy
 
-The app will enrich its library by fetching data from:
-*   **Books:** Open Library API
-*   **Comics:** ComicVine API (requires user API key, non-commercial use only)
-*   **Audiobooks:** OverDrive API
-*   **Movies/TV:** The Movie Database (TMDB) API, TheSportsDB API (to be investigated)
-*   **Music:** MusicBrainz API (to be investigated)
+The application will feature a powerful, multi-layered strategy for metadata.
 
-### Metadata Tooling & Strategy
+1.  **Automated Metadata Correction:**
+    *   **OCR on Covers:** The app will use **Google's ML Kit Text Recognition** (Apache 2.0 license) to perform OCR on book covers to identify and correct titles and authors.
+    *   **Text Analysis:** The app will use the **Apache OpenNLP** library (Apache 2.0 license) to perform Named Entity Recognition (NER) on the first few pages of e-books to programmatically identify and correct metadata.
 
-*   **Reading Embedded Metadata:** Use the native Android **`MediaMetadataRetriever`**.
-*   **Writing Embedded Metadata (Audio/Video):** Use the C++ library **`tageditor`** as a reference or integrated component.
-*   **Writing Embedded Metadata (Comics):** Replicate the logic from the Python tool **`ComicTagger`** to write `ComicInfo.xml` files.
-*   **Scraping & Organization Logic:** Use **`TinyMediaManager`** and **`Chocolate`** as high-level references.
+2.  **Manual Metadata Editing:**
+    *   A dedicated UI will be built to allow users to manually edit all metadata fields. This screen will show a "before and after" comparison when automated corrections are applied, giving the user full control.
+
+3.  **External Metadata Sources:**
+    *   The app will enrich its library by fetching data from a wide range of sources:
+        *   **Books:** Open Library API, **Google Books API**, **Hardcover API**.
+        *   **Comics:** ComicVine API.
+        *   **Audiobooks:** OverDrive API.
+        *   **Movies/TV:** The Movie Database (TMDB) API, **OMDb API**.
+        *   **Music:** MusicBrainz API, **Spotify Web API**.
+
+4.  **Embedded Metadata Tooling:**
+    *   **Reading:** The app will prioritize using standard Android libraries like `MediaMetadataRetriever` (for audio/video) and `ExifInterface` (for images) for reading embedded tags.
+    *   **Writing:** For writing metadata, the app will use `ExifInterface` for images. For audio and video, specialized libraries will be chosen during implementation to ensure robust tag writing capabilities.
+
+### Content Creation Features
+
+The application will include features to create new content from external sources.
+
+*   **News-to-Epub:** A feature to download news from various sources and format it into a `.epub` file.
+*   **Fanfic-to-Epub:** A feature to download fanfiction from popular archives and format it into a `.epub` file.
 
 ---
 
-## 4. Development Plan
+## 4. Development Plan (REVISED)
 
-### Phase 1: Core Architecture and Database (MVP)
-1.  **Database Schema Design:** Design the detailed SQLite database schema.
-2.  **Native Database Library:** Implement the core data access layer in Kotlin.
-3.  **Proof-of-Concept UI:** Build a simple UI to display items from the database.
+### Phase 1: Foundational Research & Component Selection (COMPLETE)
+*   E-Reader Component Investigation (Completed: `epub4j`)
+*   Data Correction Technology Research (Completed: ML Kit & OpenNLP)
+*   Expanded Metadata Source Research (Completed: New APIs identified)
 
-### Phase 2: Reader and Player Integration
-1.  **Integrate E-book/Comic Reader:** Integrate the KOReader engine.
-2.  **Build Audio Player:** Build the audio player based on the AntennaPod model.
-3.  **Build Video Player:** Integrate the ExoPlayer/libvlc engine.
+### Phase 2: Architecture & Core Data Model (IN PROGRESS)
+1.  **System Architecture Design:** Update `README.md` and `RESOURCES.md` to reflect the new architecture.
+2.  **Advanced Database Schema and Import Logic:** Design the detailed SQLite schema and the logic for the Calibre import and data cleaning.
+3.  **Design Manual Metadata Editing UI:** Create mockups and specifications for the metadata editing screen.
 
-### Phase 3: Metadata and UI Polish
-1.  **Metadata Fetching Service:** Implement the service to fetch metadata from all external APIs.
-2.  **Metadata Editing UI:** Build the user interface for manual metadata editing.
-3.  **Full-Featured UI:** Build out the complete, polished user interface.
+### Phase 3: Implementation
+1.  **Implement Core Data Layer:** Build the database and the Calibre importer.
+2.  **Implement "Content-to-Epub" Features:** Build the news and fanfiction downloaders.
+3.  **Integrate Media Viewers & Players:** Integrate `epub4j` and build the audio/video players.
+4.  **Build the User Interface:** Build the main library screens and the manual metadata editor.
+
+### Phase 4: Testing and Polish
+*   Perform end-to-end testing, paying special attention to the performance of `epub4j` and the accuracy of the data correction engine.
+*   Refine the UI and user experience.
 
 ---
 
 ## 5. Feature Roadmap (Inspired by Moon+ Reader)
 
-The following features, inspired by the best-in-class Moon+ Reader Pro, should be considered for implementation to ensure a competitive and full-featured application.
+The following features, inspired by the best-in-class Moon+ Reader Pro, should be considered as a long-term guide for implementation to ensure a competitive and full-featured application.
 
 ### Reading & Customization
 - **Deep Visual Controls:** Line space, font scale, bold, italic, shadow, alpha colors, fading edge.
