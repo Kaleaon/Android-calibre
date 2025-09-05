@@ -86,4 +86,74 @@ class MediaItemDao(context: Context) {
             dateModified = cursor.getLong(cursor.getColumnIndexOrThrow("date_modified"))
         )
     }
+
+    // Gets an author's ID if they exist, otherwise creates them and returns the new ID.
+    private fun getOrCreateAuthor(db: SQLiteDatabase, authorName: String): Long {
+        val cursor = db.query("authors", arrayOf("id"), "name = ?", arrayOf(authorName), null, null, null)
+        val authorId: Long
+        cursor.use { c ->
+            if (c.moveToFirst()) {
+                authorId = c.getLong(c.getColumnIndexOrThrow("id"))
+            } else {
+                val values = ContentValues().apply {
+                    put("name", authorName)
+                }
+                authorId = db.insertOrThrow("authors", null, values)
+            }
+        }
+        return authorId
+    }
+
+    /**
+     * Adds a complete book record, including its base MediaItem, book details,
+     * and author information, within a single database transaction.
+     * @param mediaItem The base MediaItem object (must be of type BOOK).
+     * @param book The Book object with specific details.
+     * @param authors A list of Author objects.
+     * @return The ID of the newly created MediaItem, or -1 if an error occurred.
+     */
+    fun addBook(mediaItem: MediaItem, book: Book, authors: List<Author>): Long {
+        val db = dbHelper.writableDatabase
+        var newMediaItemId: Long = -1
+
+        db.beginTransaction()
+        try {
+            // 1. Add the base MediaItem
+            val mediaItemValues = ContentValues().apply {
+                put("title", mediaItem.title)
+                put("file_path", mediaItem.filePath)
+                put("media_type", MediaType.BOOK.name)
+                put("date_added", mediaItem.dateAdded)
+                put("date_modified", mediaItem.dateModified)
+            }
+            newMediaItemId = db.insertOrThrow("media_items", null, mediaItemValues)
+
+            // 2. Add the book-specific details
+            val bookValues = ContentValues().apply {
+                put("media_item_id", newMediaItemId)
+                put("subtitle", book.subtitle)
+                put("isbn", book.isbn)
+                put("page_count", book.pageCount)
+                put("publisher", book.publisher)
+            }
+            db.insertOrThrow("books", null, bookValues)
+
+            // 3. Add authors and link them
+            for (author in authors) {
+                val authorId = getOrCreateAuthor(db, author.name)
+                val joinValues = ContentValues().apply {
+                    put("media_item_id", newMediaItemId)
+                    put("author_id", authorId)
+                }
+                db.insertOrThrow("media_item_author_join", null, joinValues)
+            }
+
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+            db.close()
+        }
+
+        return newMediaItemId
+    }
 }

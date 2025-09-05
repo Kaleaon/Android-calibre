@@ -83,4 +83,48 @@ class MediaItemDaoTest {
         // ASSERT
         assertThat(retrievedItem).isNull()
     }
+
+    @Test
+    fun `addBook transaction inserts book, author, and links correctly`() {
+        // ARRANGE
+        val mediaItem = MediaItem(0, "Transaction Test", "/path/trans", MediaType.BOOK, 1L, 1L)
+        val book = Book(0, "A Test Subtitle", "12345", 100, "Test Publisher")
+        val authors = listOf(Author(0, "New Author", null))
+
+        // ACT
+        val newId = mediaItemDao.addBook(mediaItem, book, authors)
+        assertThat(newId).isNotEqualTo(-1)
+
+        // ASSERT
+        // Use raw queries to check the state of each table directly
+        val db = dbHelper.readableDatabase
+
+        // 1. Check media_items table
+        db.query("media_items", null, "id = ?", arrayOf(newId.toString()), null, null, null).use {
+            assertThat(it.count).isEqualTo(1)
+            it.moveToFirst()
+            assertThat(it.getString(it.getColumnIndexOrThrow("title"))).isEqualTo("Transaction Test")
+        }
+
+        // 2. Check books table
+        db.query("books", null, "media_item_id = ?", arrayOf(newId.toString()), null, null, null).use {
+            assertThat(it.count).isEqualTo(1)
+            it.moveToFirst()
+            assertThat(it.getString(it.getColumnIndexOrThrow("subtitle"))).isEqualTo("A Test Subtitle")
+        }
+
+        // 3. Check authors table and get authorId
+        val authorId = db.query("authors", arrayOf("id"), "name = ?", arrayOf("New Author"), null, null, null).use {
+            assertThat(it.count).isEqualTo(1)
+            it.moveToFirst()
+            it.getLong(it.getColumnIndexOrThrow("id"))
+        }
+
+        // 4. Check join table
+        db.query("media_item_author_join", null, "media_item_id = ? AND author_id = ?", arrayOf(newId.toString(), authorId.toString()), null, null, null).use {
+            assertThat(it.count).isEqualTo(1)
+        }
+
+        db.close()
+    }
 }
