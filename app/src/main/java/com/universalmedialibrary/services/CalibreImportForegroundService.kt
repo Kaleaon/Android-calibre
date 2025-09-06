@@ -13,6 +13,9 @@ import com.universalmedialibrary.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,11 +25,14 @@ class CalibreImportForegroundService : Service() {
     @Inject
     lateinit var calibreImportService: CalibreImportService
 
-    private val serviceScope = CoroutineScope(Dispatchers.IO)
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val calibreDbPath = intent?.getStringExtra(EXTRA_DB_PATH) ?: return START_NOT_STICKY
-        val libraryRootPath = intent?.getStringExtra(EXTRA_ROOT_PATH) ?: return START_NOT_STICKY
+        if (intent == null) return START_NOT_STICKY
+        
+        val calibreDbPath = intent.getStringExtra(EXTRA_DB_PATH) ?: return START_NOT_STICKY
+        val libraryRootPath = intent.getStringExtra(EXTRA_ROOT_PATH) ?: return START_NOT_STICKY
         val libraryId = intent.getLongExtra(EXTRA_LIBRARY_ID, -1)
         if (libraryId == -1L) return START_NOT_STICKY
 
@@ -81,6 +87,12 @@ class CalibreImportForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Cancel all coroutines to prevent memory leaks and ensure proper cleanup
+        serviceScope.cancel()
     }
 
     companion object {
