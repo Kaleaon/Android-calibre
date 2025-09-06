@@ -7,40 +7,36 @@ import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import java.lang.reflect.Method
+
 
 class CalibreImportServiceTest {
 
     private lateinit var calibreImportService: CalibreImportService
-    private lateinit var cleanAuthorName: Method
 
     @Before
     fun setUp() {
         val mediaItemDao: MediaItemDao = mockk(relaxed = true)
         val metadataDao: MetadataDao = mockk(relaxed = true)
         calibreImportService = CalibreImportService(mediaItemDao, metadataDao)
-
-        cleanAuthorName = CalibreImportService::class.java.getDeclaredMethod("cleanAuthorName", String::class.java)
-        cleanAuthorName.isAccessible = true
     }
 
     @Test
     fun `cleanAuthorName given name in 'First Last' format, parses correctly`() {
-        val result = cleanAuthorName.invoke(calibreImportService, "J. R. R. Tolkien") as People
+        val result = calibreImportService.cleanAuthorName("J. R. R. Tolkien")
         assertEquals("J. R. R. Tolkien", result.name)
         assertEquals("Tolkien, J. R. R.", result.sortName)
     }
 
     @Test
     fun `cleanAuthorName given name in 'Last, First' format, parses correctly`() {
-        val result = cleanAuthorName.invoke(calibreImportService, "Tolkien, J. R. R.") as People
+        val result = calibreImportService.cleanAuthorName("Tolkien, J. R. R.")
         assertEquals("J. R. R. Tolkien", result.name)
         assertEquals("Tolkien, J. R. R.", result.sortName)
     }
 
     @Test
     fun `cleanAuthorName given single word name, parses correctly`() {
-        val result = cleanAuthorName.invoke(calibreImportService, "Plato") as People
+        val result = calibreImportService.cleanAuthorName("Plato")
         assertEquals("Plato", result.name)
         assertEquals("Plato", result.sortName)
     }
