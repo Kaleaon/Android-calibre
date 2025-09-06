@@ -33,7 +33,8 @@ class ContentServicesTest {
     fun `FanficExtractionService extracts title and author from local HTML`() {
         val service = FanficExtractionService()
         val inputStream = javaClass.classLoader?.getResourceAsStream("The_Wonderful_Wizard_of_Oz_AO3.html")
-        val html = inputStream!!.bufferedReader().readText()
+        assertThat(inputStream).withFailMessage("Test resource 'The_Wonderful_Wizard_of_Oz_AO3.html' not found in classpath.").isNotNull()
+        val html = inputStream.bufferedReader().readText()
         val doc = org.jsoup.Jsoup.parse(html)
 
         val content = service.parseAo3Document(doc)
