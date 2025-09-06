@@ -5,6 +5,14 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 
+/**
+ * Provides data access methods for [MediaItem] and related objects.
+ *
+ * This class handles all database operations for media items, including creating,
+ * reading, and updating records in the `media_items` table and its related tables.
+ *
+ * @param context The context to use for creating the [DatabaseHelper].
+ */
 class MediaItemDao(context: Context) {
 
     private val dbHelper = DatabaseHelper(context)
@@ -57,7 +65,7 @@ class MediaItemDao(context: Context) {
     }
 
     /**
-     * Retrieves all MediaItems from the database.
+     * Retrieves all MediaItems from the database, ordered by title.
      * @return A list of all MediaItems.
      */
     fun getAllMediaItems(): List<MediaItem> {
@@ -76,6 +84,11 @@ class MediaItemDao(context: Context) {
         return items
     }
 
+    /**
+     * Maps a [Cursor] row to a [MediaItem] object.
+     * @param cursor The database cursor, positioned at the correct row.
+     * @return The parsed [MediaItem] object.
+     */
     private fun cursorToMediaItem(cursor: Cursor): MediaItem {
         return MediaItem(
             id = cursor.getLong(cursor.getColumnIndexOrThrow("id")),
@@ -87,7 +100,13 @@ class MediaItemDao(context: Context) {
         )
     }
 
-    // Gets an author's ID if they exist, otherwise creates them and returns the new ID.
+    /**
+     * Retrieves the ID of an author by name if they exist in the database.
+     * If the author does not exist, a new record is created, and the new ID is returned.
+     * @param db The writable database instance.
+     * @param authorName The name of the author to find or create.
+     * @return The existing or newly created ID for the author.
+     */
     private fun getOrCreateAuthor(db: SQLiteDatabase, authorName: String): Long {
         val cursor = db.query("authors", arrayOf("id"), "name = ?", arrayOf(authorName), null, null, null)
         val authorId: Long
