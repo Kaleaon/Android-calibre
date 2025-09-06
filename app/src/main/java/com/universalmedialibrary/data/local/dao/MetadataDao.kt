@@ -4,11 +4,17 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.universalmedialibrary.data.local.model.*
+import com.universalmedialibrary.data.local.model.Genre
+import com.universalmedialibrary.data.local.model.ItemGenre
+import com.universalmedialibrary.data.local.model.ItemPersonRole
+import com.universalmedialibrary.data.local.model.MetadataBook
+import com.universalmedialibrary.data.local.model.MetadataCommon
+import com.universalmedialibrary.data.local.model.MetadataMovie
+import com.universalmedialibrary.data.local.model.People
+import com.universalmedialibrary.data.local.model.Series
 
 @Dao
 interface MetadataDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMetadataCommon(metadataCommon: MetadataCommon)
 
@@ -43,5 +49,8 @@ interface MetadataDao {
     suspend fun insertSeries(series: Series): Long
 
     @Query("UPDATE metadata_book SET seriesId = :seriesId WHERE itemId = :itemId")
-    suspend fun updateBookWithSeries(itemId: Long, seriesId: Long)
+    suspend fun updateBookWithSeries(
+        itemId: Long,
+        seriesId: Long,
+    )
 }

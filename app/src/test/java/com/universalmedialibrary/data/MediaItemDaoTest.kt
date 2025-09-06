@@ -13,7 +13,6 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.P])
 class MediaItemDaoTest {
-
     private lateinit var dbHelper: DatabaseHelper
     private lateinit var mediaItemDao: MediaItemDao
 
@@ -38,14 +37,15 @@ class MediaItemDaoTest {
     @Test
     fun `addMediaItem and getMediaItem returns correct item`() {
         // ARRANGE
-        val newItem = MediaItem(
-            id = 1, // id is ignored by addMediaItem, but needed for the data class
-            title = "Test Book",
-            filePath = "/path/to/book.epub",
-            mediaType = MediaType.BOOK,
-            dateAdded = System.currentTimeMillis(),
-            dateModified = System.currentTimeMillis()
-        )
+        val newItem =
+            MediaItem(
+                id = 1, // id is ignored by addMediaItem, but needed for the data class
+                title = "Test Book",
+                filePath = "/path/to/book.epub",
+                mediaType = MediaType.BOOK,
+                dateAdded = System.currentTimeMillis(),
+                dateModified = System.currentTimeMillis(),
+            )
 
         // ACT
         val newId = mediaItemDao.addMediaItem(newItem)
@@ -114,16 +114,26 @@ class MediaItemDaoTest {
         }
 
         // 3. Check authors table and get authorId
-        val authorId = db.query("authors", arrayOf("id"), "name = ?", arrayOf("New Author"), null, null, null).use {
-            assertThat(it.count).isEqualTo(1)
-            it.moveToFirst()
-            it.getLong(it.getColumnIndexOrThrow("id"))
-        }
+        val authorId =
+            db.query("authors", arrayOf("id"), "name = ?", arrayOf("New Author"), null, null, null).use {
+                assertThat(it.count).isEqualTo(1)
+                it.moveToFirst()
+                it.getLong(it.getColumnIndexOrThrow("id"))
+            }
 
         // 4. Check join table
-        db.query("media_item_author_join", null, "media_item_id = ? AND author_id = ?", arrayOf(newId.toString(), authorId.toString()), null, null, null).use {
-            assertThat(it.count).isEqualTo(1)
-        }
+        db
+            .query(
+                "media_item_author_join",
+                null,
+                "media_item_id = ? AND author_id = ?",
+                arrayOf(newId.toString(), authorId.toString()),
+                null,
+                null,
+                null,
+            ).use {
+                assertThat(it.count).isEqualTo(1)
+            }
 
         db.close()
     }

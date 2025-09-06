@@ -12,21 +12,28 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
-    private val libraryDao: LibraryDao
-) : ViewModel() {
+class MainViewModel
+    @Inject
+    constructor(
+        private val libraryDao: LibraryDao,
+    ) : ViewModel() {
+        val libraries: StateFlow<List<Library>> =
+            libraryDao
+                .getAllLibraries()
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = emptyList(),
+                )
 
-    val libraries: StateFlow<List<Library>> = libraryDao.getAllLibraries()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
-
-    fun addLibrary(name: String, type: String, path: String) {
-        viewModelScope.launch {
-            val newLibrary = Library(name = name, type = type, path = path)
-            libraryDao.insertLibrary(newLibrary)
+        fun addLibrary(
+            name: String,
+            type: String,
+            path: String,
+        ) {
+            viewModelScope.launch {
+                val newLibrary = Library(name = name, type = type, path = path)
+                libraryDao.insertLibrary(newLibrary)
+            }
         }
     }
-}

@@ -11,19 +11,19 @@ import androidx.room.ForeignKey
             entity = MediaItem::class,
             parentColumns = ["itemId"],
             childColumns = ["itemId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = People::class,
             parentColumns = ["personId"],
             childColumns = ["personId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
-    indices = [androidx.room.Index(value = ["personId"])]
+    indices = [androidx.room.Index(value = ["personId"])],
 )
 data class ItemPersonRole(
     val itemId: Long,
     val personId: Long,
-    val role: String // e.g., 'AUTHOR', 'ACTOR', 'DIRECTOR'
+    val role: String, // e.g., 'AUTHOR', 'ACTOR', 'DIRECTOR'
 )

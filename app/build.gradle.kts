@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    id("org.jlleitschuh.gradle.ktlint")
+    id("io.gitlab.arturbosch.detekt")
 }
 
 android {
@@ -27,7 +29,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -76,7 +78,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
-
     // Hilt for Dependency Injection
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-compiler:2.51.1")
@@ -99,4 +100,29 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+// ktlint configuration
+ktlint {
+    version.set("1.3.1")
+    verbose.set(true)
+    android.set(true)
+    outputToConsole.set(true)
+    outputColorName.set("RED")
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
+    }
+    filter {
+        exclude("**/generated/**")
+        include("**/kotlin/**")
+    }
+}
+
+// detekt configuration
+detekt {
+    toolVersion = "1.23.6"
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true
+    autoCorrect = true
 }

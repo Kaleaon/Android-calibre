@@ -10,5 +10,5 @@ data class Album(
     val title: String,
     val albumArtist: String?, // For simplicity, we'll use a string for now. This can be a foreign key to a 'People' table later.
     val releaseYear: Int?,
-    val albumArtPath: String?
+    val albumArtPath: String?,
 )

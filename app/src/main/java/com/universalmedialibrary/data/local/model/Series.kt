@@ -7,5 +7,5 @@ import androidx.room.PrimaryKey
 data class Series(
     @PrimaryKey(autoGenerate = true)
     val seriesId: Long = 0,
-    val name: String
+    val name: String,
 )

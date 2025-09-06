@@ -11,10 +11,10 @@ import androidx.room.PrimaryKey
             entity = Library::class,
             parentColumns = ["libraryId"],
             childColumns = ["libraryId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
-    indices = [androidx.room.Index(value = ["libraryId"])]
+    indices = [androidx.room.Index(value = ["libraryId"])],
 )
 data class MediaItem(
     @PrimaryKey(autoGenerate = true)
@@ -23,5 +23,5 @@ data class MediaItem(
     val filePath: String,
     val dateAdded: Long,
     val lastScanned: Long,
-    val fileHash: String
+    val fileHash: String,
 )

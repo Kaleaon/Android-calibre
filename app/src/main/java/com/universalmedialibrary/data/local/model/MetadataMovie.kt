@@ -11,13 +11,13 @@ import androidx.room.PrimaryKey
             entity = MediaItem::class,
             parentColumns = ["itemId"],
             childColumns = ["itemId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
 )
 data class MetadataMovie(
     @PrimaryKey
     val itemId: Long,
     val tagline: String?,
-    val runtime: Int? // in minutes
+    val runtime: Int?, // in minutes
 )

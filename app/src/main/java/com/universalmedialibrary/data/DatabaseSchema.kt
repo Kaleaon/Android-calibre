@@ -1,7 +1,6 @@
 package com.universalmedialibrary.data
 
 object DatabaseSchema {
-
     const val SQL_CREATE_MEDIA_ITEMS = """
         CREATE TABLE media_items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
