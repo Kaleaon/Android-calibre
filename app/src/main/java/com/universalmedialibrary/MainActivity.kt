@@ -4,18 +4,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import com.universalmedialibrary.data.local.model.Library
 import com.universalmedialibrary.services.CalibreImportService
 import com.universalmedialibrary.ui.main.MainViewModel
@@ -35,17 +42,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val libraries by viewModel.libraries.collectAsState()
-            MainScreen(
+            LibraryListScreen(
                 libraries = libraries,
                 onImportClick = {
                     // For this POC, we will use the metadata.db file in the root of the repo
                     // And we will assume the library root is the repo root as well.
-                    // In a real implementation, the user would select these paths.
                     val calibreDbPath = "metadata.db"
                     val libraryRootPath = "" // Empty string means repo root
 
                     // We need to create a dummy library to associate the imported books with.
-                    // In a real app, the user would select a library.
                     val dummyLibraryId = 1L
 
                     calibreImportService.importCalibreDatabase(calibreDbPath, libraryRootPath, dummyLibraryId)
@@ -55,29 +60,65 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(libraries: List<Library>, onImportClick: suspend () -> Unit) {
+fun LibraryListScreen(libraries: List<Library>, onImportClick: suspend () -> Unit) {
     val scope = rememberCoroutineScope()
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn {
-            items(libraries) { library ->
-                LibraryListItem(library = library)
-            }
-        }
-        Button(
-            onClick = {
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
                 scope.launch {
                     onImportClick()
                 }
-            },
-            modifier = Modifier.align(Alignment.BottomCenter)
+            }) {
+                Icon(Icons.Default.Add, contentDescription = "Add Library")
+            }
+        }
+    ) { paddingValues ->
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 128.dp),
+            modifier = Modifier.padding(paddingValues),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Import Calibre DB")
+            items(libraries) { library ->
+                LibraryCard(library = library)
+            }
         }
     }
 }
 
 @Composable
-fun LibraryListItem(library: Library) {
-    Text(text = "${library.name} (${library.type})")
+fun LibraryCard(library: Library) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = getIconForLibraryType(library.type),
+                contentDescription = library.type,
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = library.name,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+    }
+}
+
+private fun getIconForLibraryType(type: String): ImageVector {
+    return when (type.uppercase()) {
+        "BOOK" -> Icons.Default.Book
+        "MOVIE" -> Icons.Default.Movie
+        "MUSIC" -> Icons.Default.MusicNote
+        else -> Icons.Default.QuestionMark
+    }
 }
