@@ -21,12 +21,18 @@ class CalibreImportService @Inject constructor(
         val rawBooks = calibreReader.readBooks(calibreDbPath)
 
         for ((_, rawBook) in rawBooks) {
-            val file = File(resolveFullPath(libraryRootPath, rawBook.path) ?: continue)
+            val resolvedPath = resolveFullPath(libraryRootPath, rawBook.path) ?: continue
+            val file = File(resolvedPath)
             if (!file.exists()) {
                 continue
             }
             val fullPath = file.absolutePath
 
+            // Conflict resolution: Skip if file already exists in database
+            val existingMediaItem = mediaItemDao.getMediaItemByFilePath(fullPath)
+            if (existingMediaItem != null) {
+                continue // Skip duplicate
+            }
 
             val cleanedTitle = cleanTitle(rawBook.title)
             val sortTitle = createSortTitle(cleanedTitle)
@@ -91,11 +97,24 @@ class CalibreImportService @Inject constructor(
     private fun resolveFullPath(libraryRootPath: String, relativePath: String): String? {
         val file = File(libraryRootPath, relativePath)
         if (file.isDirectory) {
+            // File format preference order as specified in IMPORT_LOGIC.md
+            val preferredExtensions = listOf("epub", "mobi", "azw3", "pdf", "cbz", "cbr")
+            
+            for (extension in preferredExtensions) {
+                val matchingFile = file.listFiles()?.firstOrNull { 
+                    it.extension.equals(extension, ignoreCase = true)
+                }
+                if (matchingFile != null) {
+                    return matchingFile.absolutePath
+                }
+            }
+            
+            // Fallback: return any e-book file if no preferred format found
             return file.listFiles()
-                ?.firstOrNull { it.extension in listOf("epub", "mobi", "pdf") }
+                ?.firstOrNull { it.extension.lowercase() in listOf("epub", "pdf", "mobi", "azw3", "cbz", "cbr", "txt") }
                 ?.absolutePath
         }
-        return file.absolutePath
+        return if (file.exists()) file.absolutePath else null
     }
 
     private fun cleanTitle(rawTitle: String): String {

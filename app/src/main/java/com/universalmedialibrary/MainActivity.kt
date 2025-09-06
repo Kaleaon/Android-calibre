@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.MoreVert
@@ -40,6 +41,7 @@ import com.universalmedialibrary.data.local.model.Library
 import com.universalmedialibrary.services.CalibreImportForegroundService
 import com.universalmedialibrary.ui.details.LibraryDetailsViewModel
 import com.universalmedialibrary.ui.main.MainViewModel
+import com.universalmedialibrary.ui.metadata.MetadataEditorScreen
 import kotlin.math.absoluteValue
 import android.content.Intent
 import android.net.Uri
@@ -68,6 +70,14 @@ fun AppNavigation() {
         }
         composable("library_details/{libraryId}") {
             LibraryDetailsScreen()
+        }
+        composable("book_details/{bookId}") { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getString("bookId")?.toLong() ?: 0L
+            BookDetailsScreen(bookId = bookId, navController = navController)
+        }
+        composable("metadata_editor/{bookId}") { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getString("bookId")?.toLong() ?: 0L
+            MetadataEditorScreenWrapper(bookId = bookId, navController = navController)
         }
     }
 }
@@ -303,7 +313,13 @@ fun LibraryDetailsScreen(viewModel: LibraryDetailsViewModel = hiltViewModel()) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(bookDetails) { book ->
-                    BookCard(book = book)
+                    BookCard(
+                        book = book,
+                        onClick = {
+                            // Navigate to book details - for now just a placeholder
+                            // navController.navigate("book_details/${book.mediaItem.itemId}")
+                        }
+                    )
                 }
             }
         }
@@ -311,11 +327,11 @@ fun LibraryDetailsScreen(viewModel: LibraryDetailsViewModel = hiltViewModel()) {
 }
 
 @Composable
-fun BookCard(book: BookDetails) {
+fun BookCard(book: BookDetails, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Handle book selection */ },
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
@@ -497,4 +513,62 @@ private fun getIconForLibraryType(type: String): ImageVector {
         "MUSIC" -> Icons.Default.MusicNote
         else -> Icons.Default.QuestionMark
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BookDetailsScreen(bookId: Long, navController: NavController) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Book Details") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { 
+                            navController.navigate("metadata_editor/$bookId")
+                        }
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Metadata")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Book Details for ID: $bookId",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "This is a placeholder for the book details screen. In a complete implementation, this would show full book metadata, cover image, and reading options.",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
+
+@Composable
+fun MetadataEditorScreenWrapper(bookId: Long, navController: NavController) {
+    MetadataEditorScreen(
+        title = "Sample Book Title",
+        author = "Sample Author",
+        onSave = { metadata ->
+            // In a real implementation, this would save to the database
+            navController.navigateUp()
+        },
+        onBack = {
+            navController.navigateUp()
+        }
+    )
 }
