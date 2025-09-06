@@ -1,0 +1,26 @@
+# Gradle files
+.gradle/
+build/
+
+# Android build files
+app/build/
+*/build/
+
+# Local properties
+local.properties
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Mac
+.DS_Store
+
+# Captures
+captures/
+
+# Keystore
+*.jks
+*.keystore
