@@ -6,6 +6,7 @@ import com.universalmedialibrary.data.local.AppDatabase
 import com.universalmedialibrary.data.local.dao.LibraryDao
 import com.universalmedialibrary.data.local.dao.MediaItemDao
 import com.universalmedialibrary.data.local.dao.MetadataDao
+import com.universalmedialibrary.services.CalibreDatabaseReader
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,5 +41,11 @@ object DatabaseModule {
     @Provides
     fun provideMetadataDao(appDatabase: AppDatabase): MetadataDao {
         return appDatabase.metadataDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCalibreDatabaseReader(): CalibreDatabaseReader {
+        return CalibreDatabaseReader()
     }
 }
