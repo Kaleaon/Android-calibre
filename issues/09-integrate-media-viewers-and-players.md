@@ -1,6 +1,6 @@
 # Issue: Integrate Media Viewers & Players
 
-**Status:** Not Started
+**Status:** In Progress
 
 ## User Story
 As a user, I want to be able to open and consume all my media—books, audio, and video—directly within the app, so I don't have to switch between different applications for different media types.
@@ -10,10 +10,10 @@ As a user, I want to be able to open and consume all my media—books, audio, an
 - **Ease of use:** Opening and using the viewers should be intuitive. The players should have standard controls and feel familiar to the user.
 - **Criteria:**
     - [ ] The `epub4j` library is integrated to parse and display e-book content.
-    - [ ] A basic but functional e-reader UI is built on top of `epub4j`.
-    - [ ] An audio player is built for music and audiobooks, using the architecture of AntennaPod as a blueprint.
-    - [ ] A video player is built using AndroidX Media3 (ExoPlayer).
-    - [ ] The viewers are launched correctly when a user taps on a media item from their library.
+    - [x] A basic but functional e-reader UI is built on top of `epub4j`.
+    - [x] An audio player is built for music and audiobooks, using the architecture of AntennaPod as a blueprint.
+    - [x] A video player is built using AndroidX Media3 (ExoPlayer).
+    - [x] The viewers are launched correctly when a user taps on a media item from their library.
 
 ## Details
 This task involves integrating the pre-selected components for media consumption into the application.
@@ -34,7 +34,7 @@ This task involves integrating the pre-selected components for media consumption
 
 ## Labels
 - `phase-3-implementation`
-- `status-not-started`
+- `status-in-progress`
 - `e-reader`
 - `audio-player`
 - `video-player`
