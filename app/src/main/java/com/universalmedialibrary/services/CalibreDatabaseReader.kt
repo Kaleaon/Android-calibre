@@ -1,15 +1,30 @@
 package com.universalmedialibrary.services
 
 import android.database.sqlite.SQLiteDatabase
-import com.universalmedialibrary.services.RawCalibreBook
 
+/**
+ * Reads raw book data from a Calibre `metadata.db` file.
+ *
+ * This class is responsible for opening a connection to a Calibre database,
+ * querying it for book and author information, and returning it in a raw format.
+ */
 class CalibreDatabaseReader {
 
+    /**
+     * Reads all books and their primary author from the specified Calibre database file.
+     *
+     * It performs a read-only query on the `books` and `authors` tables.
+     * Note: This implementation only retrieves the first author for books with multiple authors.
+     *
+     * @param calibreDbPath The absolute file path to the Calibre `metadata.db` file.
+     * @return A map of Calibre book IDs to [RawCalibreBook] objects. Returns an empty map if the database cannot be read.
+     */
     fun readBooks(calibreDbPath: String): Map<Long, RawCalibreBook> {
         val calibreDb: SQLiteDatabase
         try {
             calibreDb = SQLiteDatabase.openDatabase(calibreDbPath, null, SQLiteDatabase.OPEN_READONLY)
         } catch (e: Exception) {
+            // Consider logging the exception
             return emptyMap()
         }
 
@@ -23,18 +38,19 @@ class CalibreDatabaseReader {
         val cursor = calibreDb.rawQuery(query, null)
 
         val rawBooks = mutableMapOf<Long, RawCalibreBook>()
-        while (cursor.moveToNext()) {
-            val bookId = cursor.getLong(cursor.getColumnIndexOrThrow("id"))
-            if (!rawBooks.containsKey(bookId)) {
-                rawBooks[bookId] = RawCalibreBook(
-                    id = bookId,
-                    title = cursor.getString(cursor.getColumnIndexOrThrow("title")),
-                    path = cursor.getString(cursor.getColumnIndexOrThrow("path")),
-                    authorName = cursor.getString(cursor.getColumnIndexOrThrow("name"))
-                )
+        cursor.use { c ->
+            while (c.moveToNext()) {
+                val bookId = c.getLong(c.getColumnIndexOrThrow("id"))
+                if (!rawBooks.containsKey(bookId)) {
+                    rawBooks[bookId] = RawCalibreBook(
+                        id = bookId,
+                        title = c.getString(c.getColumnIndexOrThrow("title")),
+                        path = c.getString(c.getColumnIndexOrThrow("path")),
+                        authorName = c.getString(c.getColumnIndexOrThrow("name"))
+                    )
+                }
             }
         }
-        cursor.close()
         calibreDb.close()
         return rawBooks
     }

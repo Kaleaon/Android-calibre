@@ -34,6 +34,10 @@ import com.universalmedialibrary.ui.details.LibraryDetailsViewModel
 import com.universalmedialibrary.ui.main.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
+/**
+ * The main entry point of the application.
+ * This activity hosts the Jetpack Compose UI.
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
@@ -45,6 +49,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Sets up the navigation graph for the application.
+ */
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -58,6 +65,12 @@ fun AppNavigation() {
     }
 }
 
+/**
+ * A screen that displays a list of all media libraries.
+ *
+ * @param navController The [NavController] for handling navigation events.
+ * @param viewModel The [MainViewModel] for this screen.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = hiltViewModel()) {
@@ -92,6 +105,7 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
             AddLibraryDialog(
                 onDismiss = { showDialog = false },
                 onAdd = { name ->
+                    // TODO: Allow user to select type and path
                     viewModel.addLibrary(name, "BOOK", "/path/to/library")
                     showDialog = false
                 }
@@ -100,6 +114,11 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
     }
 }
 
+/**
+ * A screen that displays the details of a selected library.
+ *
+ * @param viewModel The [LibraryDetailsViewModel] for this screen.
+ */
 @Composable
 fun LibraryDetailsScreen(viewModel: LibraryDetailsViewModel = hiltViewModel()) {
     val bookDetails by viewModel.bookDetails.collectAsState()
@@ -116,6 +135,11 @@ fun LibraryDetailsScreen(viewModel: LibraryDetailsViewModel = hiltViewModel()) {
     }
 }
 
+/**
+ * A card composable to display a single book.
+ *
+ * @param book The [BookDetails] to display.
+ */
 @Composable
 fun BookCard(book: BookDetails) {
     Card(
@@ -135,6 +159,12 @@ fun BookCard(book: BookDetails) {
     }
 }
 
+/**
+ * A placeholder for a book cover, displaying the title and author on a colored background.
+ *
+ * @param title The title of the book.
+ * @param author The author of the book.
+ */
 @Composable
 fun PlaceholderCover(title: String, author: String?) {
     val colors = listOf(
@@ -169,6 +199,12 @@ fun PlaceholderCover(title: String, author: String?) {
     }
 }
 
+/**
+ * A dialog for adding a new library.
+ *
+ * @param onDismiss Callback invoked when the dialog is dismissed.
+ * @param onAdd Callback invoked when the user confirms adding the library, passing the name.
+ */
 @Composable
 fun AddLibraryDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
     var name by remember { mutableStateOf("") }
@@ -199,6 +235,12 @@ fun AddLibraryDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
     )
 }
 
+/**
+ * A card composable to display a single library.
+ *
+ * @param library The [Library] to display.
+ * @param onClick Callback invoked when the card is clicked.
+ */
 @Composable
 fun LibraryCard(library: Library, onClick: () -> Unit) {
     Card(
@@ -226,6 +268,12 @@ fun LibraryCard(library: Library, onClick: () -> Unit) {
     }
 }
 
+/**
+ * Returns an appropriate icon for a given library type.
+ *
+ * @param type The library type string (e.g., "BOOK").
+ * @return An [ImageVector] for the icon.
+ */
 private fun getIconForLibraryType(type: String): ImageVector {
     return when (type.uppercase()) {
         "BOOK" -> Icons.Default.Book
