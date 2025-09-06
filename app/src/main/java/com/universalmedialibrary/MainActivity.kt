@@ -3,11 +3,13 @@ package com.universalmedialibrary
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
@@ -15,62 +17,55 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.universalmedialibrary.data.local.model.Library
-import com.universalmedialibrary.services.CalibreImportService
+import com.universalmedialibrary.data.local.model.MediaItem
+import com.universalmedialibrary.ui.details.LibraryDetailsViewModel
 import com.universalmedialibrary.ui.main.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: MainViewModel by viewModels()
-
-    @Inject
-    lateinit var calibreImportService: CalibreImportService
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val libraries by viewModel.libraries.collectAsState()
-            LibraryListScreen(
-                libraries = libraries,
-                onImportClick = {
-                    // For this POC, we will use the metadata.db file in the root of the repo
-                    // And we will assume the library root is the repo root as well.
-                    val calibreDbPath = "metadata.db"
-                    val libraryRootPath = "" // Empty string means repo root
+            AppNavigation()
+        }
+    }
+}
 
-                    // We need to create a dummy library to associate the imported books with.
-                    val dummyLibraryId = 1L
-
-                    calibreImportService.importCalibreDatabase(calibreDbPath, libraryRootPath, dummyLibraryId)
-                }
-            )
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "library_list") {
+        composable("library_list") {
+            LibraryListScreen(navController = navController)
+        }
+        composable("library_details/{libraryId}") {
+            LibraryDetailsScreen()
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LibraryListScreen(libraries: List<Library>, onImportClick: suspend () -> Unit) {
-    val scope = rememberCoroutineScope()
+fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = hiltViewModel()) {
+    val libraries by viewModel.libraries.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                scope.launch {
-                    onImportClick()
-                }
-            }) {
+            FloatingActionButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Library")
             }
         }
@@ -83,16 +78,76 @@ fun LibraryListScreen(libraries: List<Library>, onImportClick: suspend () -> Uni
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(libraries) { library ->
-                LibraryCard(library = library)
+                LibraryCard(
+                    library = library,
+                    onClick = {
+                        navController.navigate("library_details/${library.libraryId}")
+                    }
+                )
             }
+        }
+
+        if (showDialog) {
+            AddLibraryDialog(
+                onDismiss = { showDialog = false },
+                onAdd = { name ->
+                    viewModel.addLibrary(name, "BOOK", "/path/to/library")
+                    showDialog = false
+                }
+            )
         }
     }
 }
 
 @Composable
-fun LibraryCard(library: Library) {
+fun LibraryDetailsScreen(viewModel: LibraryDetailsViewModel = hiltViewModel()) {
+    val mediaItems by viewModel.mediaItems.collectAsState()
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(mediaItems) { item ->
+            Text(text = item.filePath)
+        }
+    }
+}
+
+@Composable
+fun AddLibraryDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
+    var name by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add New Library") },
+        text = {
+            TextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Library Name") }
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = { onAdd(name) },
+                enabled = name.isNotBlank()
+            ) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            Button(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun LibraryCard(library: Library, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
