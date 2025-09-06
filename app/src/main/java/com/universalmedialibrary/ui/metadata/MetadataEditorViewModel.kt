@@ -114,9 +114,9 @@ class MetadataEditorViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                // TODO: Implement actual save logic
-                // This would involve updating the various metadata tables
-                // For now, we'll just mark as saved
+                // Persist metadata changes to the database
+                // This involves updating the metadata table for the current item
+                metadataDao.updateMetadataForItem(itemId, metadata)
                 
                 _uiState.value = _uiState.value.copy(
                     originalMetadata = metadata,
