@@ -44,4 +44,16 @@ interface MediaItemDao {
         WHERE mi.libraryId = :libraryId
     """)
     fun getBookDetailsForLibrary(libraryId: Long): Flow<List<BookDetails>>
+
+    @Query("DELETE FROM media_items WHERE itemId = :itemId")
+    suspend fun deleteMediaItemById(itemId: Long)
+
+    // The following manual metadata deletion methods are no longer needed,
+    // as Room will handle cascading deletes via foreign key constraints.
+
+    @androidx.room.Transaction
+    suspend fun deleteMediaItem(itemId: Long) {
+        // Simply delete the media item; related metadata will be deleted automatically.
+        deleteMediaItemById(itemId)
+    }
 }
