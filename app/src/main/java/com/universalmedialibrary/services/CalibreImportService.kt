@@ -4,6 +4,8 @@ import com.universalmedialibrary.data.local.dao.MediaItemDao
 import com.universalmedialibrary.data.local.dao.MetadataDao
 import com.universalmedialibrary.data.local.model.*
 import java.io.File
+import java.io.FileInputStream
+import java.security.MessageDigest
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,7 +39,7 @@ class CalibreImportService @Inject constructor(
         for ((_, rawBook) in rawBooks) {
             val fullPath = resolveFullPath(libraryRootPath, rawBook.path)
             if (fullPath == null || !File(fullPath).exists()) {
-                continue
+                continue // Skip if the file doesn't exist
             }
 
             val cleanedTitle = cleanTitle(rawBook.title)
@@ -50,7 +52,7 @@ class CalibreImportService @Inject constructor(
                 filePath = fullPath,
                 dateAdded = System.currentTimeMillis(),
                 lastScanned = System.currentTimeMillis(),
-                fileHash = "" // Hashing can be implemented later
+                fileHash = calculateFileHash(fullPath)
             )
             val newId = mediaItemDao.insertMediaItem(mediaItem)
 
@@ -137,10 +139,37 @@ class CalibreImportService @Inject constructor(
     }
 
     /**
-     * Capitalizes the first letter of a string.
+     * Capitalizes the first letter of a string, leaving the rest of the string as is.
+     * This is an extension function on the [String] class.
+     *
+     * @return The capitalized string.
      */
     private fun String.myCapitalize(): String {
         if (this.isEmpty()) return ""
         return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }
+
+    /**
+     * Calculates the SHA-256 hash of a file.
+     *
+     * @param filePath The path to the file.
+     * @return The SHA-256 hash as a hex string, or an empty string if an error occurs.
+     */
+    private fun calculateFileHash(filePath: String): String {
+        return try {
+            val messageDigest = MessageDigest.getInstance("SHA-256")
+            FileInputStream(filePath).use { fis ->
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (fis.read(buffer).also { bytesRead = it } != -1) {
+                    messageDigest.update(buffer, 0, bytesRead)
+                }
+            }
+            val digest = messageDigest.digest()
+            digest.joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) {
+            // Log the exception in a real app
+            ""
+        }
     }
 }
