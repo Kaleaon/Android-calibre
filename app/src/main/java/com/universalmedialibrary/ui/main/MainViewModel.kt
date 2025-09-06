@@ -24,9 +24,23 @@ class MainViewModel @Inject constructor(
         )
 
     fun addLibrary(name: String, type: String, path: String) {
+        // Safety: Validate inputs before processing
+        val trimmedName = name.trim()
+        val trimmedType = type.trim()
+        val trimmedPath = path.trim()
+        
+        if (trimmedName.isBlank() || trimmedType.isBlank() || trimmedPath.isBlank()) {
+            return // Early return for invalid inputs
+        }
+        
         viewModelScope.launch {
-            val newLibrary = Library(name = name, type = type, path = path)
-            libraryDao.insertLibrary(newLibrary)
+            try {
+                val newLibrary = Library(name = trimmedName, type = trimmedType, path = trimmedPath)
+                libraryDao.insertLibrary(newLibrary)
+            } catch (e: Exception) {
+                // Safety: Handle database insertion errors gracefully
+                // In production, this would be logged and possibly shown to user
+            }
         }
     }
 }

@@ -201,7 +201,12 @@ fun PlaceholderCover(title: String, author: String?) {
         Color(0xFFE57373), Color(0xFF81C784), Color(0xFF64B5F6),
         Color(0xFFF06292), Color(0xFF4DB6AC), Color(0xFFFFD54F)
     )
-    val color = colors[title.hashCode() % colors.size]
+    // Safety: Ensure colors list is not empty to prevent division by zero
+    val color = if (colors.isNotEmpty()) {
+        colors[kotlin.math.abs(title.hashCode()) % colors.size]
+    } else {
+        Color.Gray // Fallback color
+    }
 
     Box(
         modifier = Modifier
@@ -245,8 +250,14 @@ fun AddLibraryDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
         },
         confirmButton = {
             Button(
-                onClick = { onAdd(name) },
-                enabled = name.isNotBlank()
+                onClick = { 
+                    // Safety: Validate input before calling onAdd
+                    val trimmedName = name.trim()
+                    if (trimmedName.isNotBlank()) {
+                        onAdd(trimmedName)
+                    }
+                },
+                enabled = name.trim().isNotBlank()
             ) {
                 Text("Add")
             }
