@@ -1,0 +1,34 @@
+name: 
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  resolve-conflicts:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.head_ref }}
+        fetch-depth: 0
+
+    - name: Attempt to merge
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git merge origin/${{ github.base_ref }} || echo "Merge conflict detected"
+
+    - name: Resolve conflicts
+      if: failure()
+      run: |
+        # Run your custom script to resolve conflicts
+        ./scripts/resolve-merge-conflicts.sh
+
+    - name: Commit and push changes
+      if: failure()
+      run: |
+        git add .
+        git commit -m "Automated merge conflict resolution"
+        git push
