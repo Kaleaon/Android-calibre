@@ -63,7 +63,7 @@ class CalibreImportForegroundService : Service() {
             .setContentText(contentText)
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .build()
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 

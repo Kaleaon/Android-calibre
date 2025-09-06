@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permissions required for foreground services on Android 9+ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Required for data sync type foreground service on Android 14+ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
     <application
         android:name=".MainApplication"
         android:allowBackup="true"
@@ -17,7 +22,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".services.CalibreImportForegroundService" />
+        
+        <!-- Configure foreground service with proper type for Android 14+ -->
+        <service 
+            android:name=".services.CalibreImportForegroundService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
     </application>
 
 </manifest>
