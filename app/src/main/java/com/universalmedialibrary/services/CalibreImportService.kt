@@ -76,8 +76,9 @@ class CalibreImportService @Inject constructor(
     }
 
     private fun cleanAuthorName(rawName: String): People {
-        val nameParts = if (rawName.contains(",")) {
-            rawName.split(",").map { it.trim() }
+        val trimmedName = rawName.trim()
+        val nameParts = if (trimmedName.contains(",")) {
+            trimmedName.split(",").map { it.trim() }
         } else {
             val parts = rawName.split(" ").map { it.trim() }
             if (parts.size == 1) {
