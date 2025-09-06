@@ -3,6 +3,7 @@ package com.universalmedialibrary.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import com.universalmedialibrary.data.local.model.Genre
 import com.universalmedialibrary.data.local.model.ItemGenre
 import com.universalmedialibrary.data.local.model.ItemPersonRole
@@ -34,4 +35,10 @@ interface MetadataDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItemPersonRole(itemPersonRole: ItemPersonRole)
+
+    @Query("SELECT * FROM metadata_common WHERE itemId = :itemId")
+    suspend fun getMetadataCommonById(itemId: Long): MetadataCommon?
+
+    @Query("SELECT * FROM metadata_book WHERE itemId = :itemId")
+    suspend fun getMetadataBookById(itemId: Long): MetadataBook?
 }

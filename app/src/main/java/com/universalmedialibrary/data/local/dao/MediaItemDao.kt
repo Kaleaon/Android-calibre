@@ -44,4 +44,33 @@ interface MediaItemDao {
         WHERE mi.libraryId = :libraryId
     """)
     fun getBookDetailsForLibrary(libraryId: Long): Flow<List<BookDetails>>
+
+    @Query("DELETE FROM media_items WHERE itemId = :itemId")
+    suspend fun deleteMediaItemById(itemId: Long)
+
+    @Query("DELETE FROM metadata_common WHERE itemId = :itemId")
+    suspend fun deleteMetadataCommonById(itemId: Long)
+
+    @Query("DELETE FROM metadata_book WHERE itemId = :itemId")
+    suspend fun deleteMetadataBookById(itemId: Long)
+
+    @Query("DELETE FROM metadata_movie WHERE itemId = :itemId")
+    suspend fun deleteMetadataMovieById(itemId: Long)
+
+    @Query("DELETE FROM metadata_music_track WHERE itemId = :itemId")
+    suspend fun deleteMetadataMusicTrackById(itemId: Long)
+
+    @androidx.room.Transaction
+    suspend fun deleteMediaItem(itemId: Long) {
+        // First, delete the metadata associated with the media item.
+        // It's safe to call these even if there's no matching metadata,
+        // as they will simply do nothing.
+        deleteMetadataCommonById(itemId)
+        deleteMetadataBookById(itemId)
+        deleteMetadataMovieById(itemId)
+        deleteMetadataMusicTrackById(itemId)
+
+        // Finally, delete the media item itself.
+        deleteMediaItemById(itemId)
+    }
 }
