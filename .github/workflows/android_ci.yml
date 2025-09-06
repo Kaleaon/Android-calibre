@@ -48,5 +48,17 @@ jobs:
       - name: Unit tests
         run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
 
+      - name: Generate test coverage report
+        run: ./gradlew --no-daemon --stacktrace jacocoTestReport
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          fail_ci_if_error: false
+
+      - name: Instrumentation tests  
+        run: ./gradlew --no-daemon --stacktrace connectedDebugAndroidTest
+
       # If you use lint or detekt, add them as separate steps:
        - run: ./gradlew --no-daemon --stacktrace lint
