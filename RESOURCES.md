@@ -1,4 +1,4 @@
-# Project Resources and References
+# Project Resources and References (REVISED)
 
 This document consolidates all external resources, APIs, tools, and project references for the Universal Media Library application.
 
@@ -18,20 +18,7 @@ This document consolidates all external resources, APIs, tools, and project refe
 - **AndroidX Media3 (ExoPlayer)**: The standard, modern, and recommended video player for Android.
   - *Developer Guide*: `https://developer.android.com/guide/topics/media/media3`
 
-## 2. AI & Data Correction
-
-### OCR Engine
-- **Google ML Kit Text Recognition**: The modern, on-device OCR solution for Android.
-  - *License*: Apache 2.0
-  - *Website*: `https://developers.google.com/ml-kit/vision/text-recognition`
-
-### NLP Engine
-- **Apache OpenNLP**: A machine learning based toolkit for the processing of natural language text.
-  - *License*: Apache 2.0
-  - *Website*: `https://opennlp.apache.org/`
-  - *Note*: Will be used for Named Entity Recognition (NER) to find titles and authors.
-
-## 3. Metadata Sources (APIs)
+## 2. Metadata Sources (APIs)
 
 ### Books
 - **Open Library API**: Provides bibliographic information.
@@ -61,6 +48,20 @@ This document consolidates all external resources, APIs, tools, and project refe
   - *Website*: `https://musicbrainz.org/doc/Development`
 - **Spotify Web API**: A comprehensive source for music data.
   - *Website*: `https://developer.spotify.com/documentation/web-api`
+
+
+## 3. AI & Data Correction
+
+### OCR Engine
+- **Google ML Kit Text Recognition**: The modern, on-device OCR solution for Android.
+  - *License*: Apache 2.0
+  - *Website*: `https://developers.google.com/ml-kit/vision/text-recognition`
+
+### NLP Engine
+- **Apache OpenNLP**: A machine learning based toolkit for the processing of natural language text.
+  - *License*: Apache 2.0
+  - *Website*: `https://opennlp.apache.org/`
+  - *Note*: Will be used for Named Entity Recognition (NER) to find titles and authors.
 
 ## 4. UI/UX Inspiration & Benchmarks
 
