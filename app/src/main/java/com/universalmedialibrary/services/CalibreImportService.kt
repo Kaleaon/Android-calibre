@@ -4,8 +4,6 @@ import com.universalmedialibrary.data.local.dao.MediaItemDao
 import com.universalmedialibrary.data.local.dao.MetadataDao
 import com.universalmedialibrary.data.local.model.*
 import java.io.File
-import java.io.FileInputStream
-import java.security.MessageDigest
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -13,30 +11,29 @@ import javax.inject.Singleton
 @Singleton
 class CalibreImportService @Inject constructor(
     private val mediaItemDao: MediaItemDao,
-    private val metadataDao: MetadataDao,
-    private val calibreReader: CalibreDatabaseReader
+    private val metadataDao: MetadataDao
 ) {
 
     suspend fun importCalibreDatabase(calibreDbPath: String, libraryRootPath: String, libraryId: Long) {
+        val calibreReader = CalibreDatabaseReader()
         val rawBooks = calibreReader.readBooks(calibreDbPath)
 
         for ((_, rawBook) in rawBooks) {
-            val file = File(resolveFullPath(libraryRootPath, rawBook.path) ?: continue)
-            if (!file.exists()) {
+            val fullPath = resolveFullPath(libraryRootPath, rawBook.path)
+            if (fullPath == null || !File(fullPath).exists()) {
                 continue
             }
-            val fullPath = file.absolutePath
-
 
             val cleanedTitle = cleanTitle(rawBook.title)
             val sortTitle = createSortTitle(cleanedTitle)
+            val cleanedAuthor = cleanAuthorName(rawBook.authorName ?: "Unknown")
 
             val mediaItem = MediaItem(
                 libraryId = libraryId,
                 filePath = fullPath,
                 dateAdded = System.currentTimeMillis(),
                 lastScanned = System.currentTimeMillis(),
-                fileHash = calculateMD5(file)
+                fileHash = ""
             )
             val newId = mediaItemDao.insertMediaItem(mediaItem)
 
@@ -44,47 +41,13 @@ class CalibreImportService @Inject constructor(
                 itemId = newId,
                 title = cleanedTitle,
                 sortTitle = sortTitle,
-                year = null, // Not available from Calibre easily
-                releaseDate = null, // Not available from Calibre easily
-                rating = null, // Not available from Calibre easily
-                summary = rawBook.comments,
-                coverImagePath = null
+                year = null, releaseDate = null, rating = null, summary = null, coverImagePath = null
             )
             metadataDao.insertMetadataCommon(metadataCommon)
 
-            // Insert Book-specific metadata
-            val metadataBook = MetadataBook(
-                itemId = newId,
-                subtitle = null, // Not available from Calibre easily
-                publisher = rawBook.publisher,
-                isbn = rawBook.isbn,
-                pageCount = null, // Not available from Calibre easily
-                seriesId = null // Will be handled next
-            )
-            metadataDao.insertMetadataBook(metadataBook)
-
-            // Handle Authors
-            for (authorName in rawBook.authorNames) {
-                val cleanedAuthor = cleanAuthorName(authorName)
-                val personId = metadataDao.findPersonByName(cleanedAuthor.name)
-                    ?: metadataDao.insertPerson(cleanedAuthor)
-                val itemPersonRole = ItemPersonRole(itemId = newId, personId = personId, role = "AUTHOR")
-                metadataDao.insertItemPersonRole(itemPersonRole)
-            }
-
-            // Handle Series
-            rawBook.seriesName?.let { seriesName ->
-                val seriesId = metadataDao.findSeriesByName(seriesName)
-                    ?: metadataDao.insertSeries(Series(name = seriesName))
-                metadataDao.updateBookWithSeries(newId, seriesId)
-            }
-
-            // Handle Genres (from Tags)
-            for (tagName in rawBook.tags) {
-                val genreId = metadataDao.findGenreByName(tagName)
-                    ?: metadataDao.insertGenre(Genre(name = tagName))
-                metadataDao.insertItemGenre(ItemGenre(itemId = newId, genreId = genreId))
-            }
+            val personId = metadataDao.insertPerson(cleanedAuthor)
+            val itemPersonRole = ItemPersonRole(itemId = newId, personId = personId, role = "AUTHOR")
+            metadataDao.insertItemPersonRole(itemPersonRole)
         }
     }
 
@@ -113,36 +76,21 @@ class CalibreImportService @Inject constructor(
     }
 
     private fun cleanAuthorName(rawName: String): People {
-        val (lastName, firstName) = if (rawName.contains(",")) {
-            val parts = rawName.split(",", limit = 2).map { it.trim() }
-            Pair(parts.getOrElse(0) { "" }, parts.getOrElse(1) { "" })
+        val nameParts = if (rawName.contains(",")) {
+            rawName.split(",").map { it.trim() }
         } else {
-            val parts = rawName.split(" ").filter { it.isNotBlank() }
-            Pair(parts.lastOrNull() ?: "", parts.dropLast(1).joinToString(" "))
+            val parts = rawName.split(" ").map { it.trim() }
+            listOf(parts.dropLast(1).joinToString(" "), parts.last())
         }
-
-        val finalFirstName = firstName.myCapitalize()
-        val finalLastName = lastName.myCapitalize()
-
-        val cleanName = "$finalFirstName $finalLastName".trim()
-        val sortName = "$finalLastName, $finalFirstName".trim().removeSuffix(",").trim()
+        val firstName = nameParts.getOrNull(1)?.myCapitalize() ?: ""
+        val lastName = nameParts.getOrNull(0)?.myCapitalize() ?: ""
+        val cleanName = "$firstName $lastName".trim()
+        val sortName = "$lastName, $firstName".trim()
         return People(personId = 0, name = cleanName, sortName = sortName)
     }
 
     private fun String.myCapitalize(): String {
         if (this.isEmpty()) return ""
         return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-    }
-
-    private fun calculateMD5(file: File): String {
-        val digest = MessageDigest.getInstance("MD5")
-        val inputStream = FileInputStream(file)
-        val buffer = ByteArray(8192)
-        var read: Int
-        while (inputStream.read(buffer).also { read = it } > 0) {
-            digest.update(buffer, 0, read)
-        }
-        val md5sum = digest.digest()
-        return md5sum.joinToString("") { "%02x".format(it) }
     }
 }

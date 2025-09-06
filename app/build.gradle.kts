@@ -87,11 +87,16 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
 
+    // Jsoup for Web Scraping
+    implementation("org.jsoup:jsoup:1.17.2")
+
+    // Epub4j for EPUB creation
+    // implementation("com.github.psiegman:epublib:3.1") // Commented out due to resolution issues
+
     testImplementation("junit:junit:4.13.2")
     testImplementation("androidx.test.ext:junit:1.1.5")
     testImplementation("org.robolectric:robolectric:4.12.1")
     testImplementation("com.google.truth:truth:1.4.2")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
