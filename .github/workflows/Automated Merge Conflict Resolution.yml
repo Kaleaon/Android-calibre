@@ -1,5 +1,3 @@
-name: 
-
 on:
   pull_request:
     types: [opened, synchronize]
@@ -7,28 +5,45 @@ on:
 jobs:
   resolve-conflicts:
     runs-on: ubuntu-latest
+    # BUG FIX 1: Grant write permissions to the job for pushing changes.
+    permissions:
+      contents: write
+      
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      # BUG FIX 2: Updated to the latest major version for security and features.
+      uses: actions/checkout@v4 
       with:
+        # Checkout the head of the PR, not the merge commit.
         ref: ${{ github.head_ref }}
+        # Fetch all history to enable merging.
         fetch-depth: 0
 
-    - name: Attempt to merge
+    - name: Configure Git user
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        git merge origin/${{ github.base_ref }} || echo "Merge conflict detected"
+
+    - name: Attempt to merge the base branch
+      # BUG FIX 3: Added an ID and continue-on-error for robust conditional logic.
+      id: merge
+      continue-on-error: true
+      run: |
+        git merge origin/${{ github.base_ref }}
 
     - name: Resolve conflicts
-      if: failure()
+      id: resolve
+      # This step now runs only if the previous 'merge' step specifically failed.
+      if: steps.merge.outcome == 'failure'
       run: |
-        # Run your custom script to resolve conflicts
+        echo "Merge conflict detected. Attempting to resolve..."
+        # Ensure your resolution script is executable in your repository, e.g., by running `git update-index --chmod=+x scripts/resolve-merge-conflicts.sh`.
         ./scripts/resolve-merge-conflicts.sh
 
     - name: Commit and push changes
-      if: failure()
+      # BUG FIX 4: Corrected conditional logic to run only after a successful resolution.
+      if: steps.merge.outcome == 'failure' && steps.resolve.outcome == 'success'
       run: |
         git add .
-        git commit -m "Automated merge conflict resolution"
+        git commit -m "chore: Automatically resolved merge conflicts"
         git push
