@@ -44,4 +44,13 @@ interface MetadataDao {
 
     @Query("UPDATE metadata_book SET seriesId = :seriesId WHERE itemId = :itemId")
     suspend fun updateBookWithSeries(itemId: Long, seriesId: Long)
+
+    @Query("SELECT * FROM metadata_common WHERE itemId = :itemId")
+    suspend fun getMetadataCommonByItemId(itemId: Long): MetadataCommon?
+
+    @Query("SELECT * FROM metadata_book WHERE itemId = :itemId")
+    suspend fun getMetadataBookByItemId(itemId: Long): MetadataBook?
+
+    @Query("SELECT * FROM metadata_movie WHERE itemId = :itemId")
+    suspend fun getMetadataMovieByItemId(itemId: Long): MetadataMovie?
 }

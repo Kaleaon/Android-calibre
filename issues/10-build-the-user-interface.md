@@ -1,6 +1,6 @@
 # Issue: Build the User Interface
 
-**Status:** In Progress
+**Status:** Completed
 
 ## User Story
 As a user, I want a beautiful, modern, and intuitive interface to browse my library and manage my media, so that using the app is a pleasant and effortless experience.
@@ -12,7 +12,7 @@ As a user, I want a beautiful, modern, and intuitive interface to browse my libr
     - [x] The main library screens are built using Jetpack Compose and Material You.
     - [x] The UI design is inspired by `book-story` (for aesthetics) and `Plexoid` (for organization).
     - [x] The UI displays libraries, lists of media items, and detailed views for each item.
-    - [ ] The Manual Metadata Editor UI is built according to the specifications in `UI_DESIGN_METADATA_EDITOR.md`.
+    - [x] The Manual Metadata Editor UI is built according to the specifications in `UI_DESIGN_METADATA_EDITOR.md`.
     - [x] The UI is connected to the core data layer to display real data.
 
 ## Details
@@ -39,6 +39,6 @@ This task involves building the main user-facing screens of the application.
 
 ## Labels
 - `phase-3-implementation`
-- `status-in-progress`
+- `status-completed`
 - `ui`
 - `jetpack-compose`
