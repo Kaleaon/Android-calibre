@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -30,9 +32,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.universalmedialibrary.data.local.model.BookDetails
 import com.universalmedialibrary.data.local.model.Library
+import com.universalmedialibrary.services.CalibreImportForegroundService
 import com.universalmedialibrary.ui.details.LibraryDetailsViewModel
 import com.universalmedialibrary.ui.main.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -63,8 +70,61 @@ fun AppNavigation() {
 fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = hiltViewModel()) {
     val libraries by viewModel.libraries.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var dbFileUri by remember { mutableStateOf<Uri?>(null) }
+
+    val rootFolderPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree(),
+        onResult = { uri ->
+            if (uri != null && dbFileUri != null) {
+                val intent = Intent(context, CalibreImportForegroundService::class.java).apply {
+                    putExtra(CalibreImportForegroundService.EXTRA_DB_PATH, dbFileUri.toString())
+                    putExtra(CalibreImportForegroundService.EXTRA_ROOT_PATH, uri.toString())
+                    // For now, we'll import into a placeholder library. A real implementation
+                    // would have the user select or create a library first.
+                    putExtra(CalibreImportForegroundService.EXTRA_LIBRARY_ID, 1L)
+                }
+                context.startForegroundService(intent)
+                dbFileUri = null // Reset for next time
+            }
+        }
+    )
+
+    val dbFilePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            if (uri != null) {
+                dbFileUri = uri
+                rootFolderPicker.launch(null)
+            }
+        }
+    )
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Libraries") },
+                actions = {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More Options")
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Import Calibre Library") },
+                            onClick = {
+                                showMenu = false
+                                // For now, let's just launch the DB file picker
+                                dbFilePicker.launch(arrayOf("application/x-sqlite3", "application/octet-stream"))
+                            }
+                        )
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Library")
