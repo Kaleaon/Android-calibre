@@ -1,6 +1,6 @@
 # Issue: Design Advanced Database Schema and Import Logic
 
-**Status:** In Progress
+**Status:** Completed
 
 ## User Story
 As a user, I want to be able to import my existing Calibre library seamlessly into the new application, so that I can get started quickly without losing my curated metadata.
@@ -9,11 +9,11 @@ As a user, I want to be able to import my existing Calibre library seamlessly in
 - **Benefit for the user:** This feature is critical for users with existing libraries, as it provides a simple migration path and respects the time they've already invested in organizing their media.
 - **Ease of use:** The import process should be straightforward for the user, requiring them only to point to their Calibre library files.
 - **Criteria:**
-    - [ ] A detailed, extensible SQLite schema is designed to support multiple media types. (`DATABASE_SCHEMA.md`)
-    - [ ] The schema design is documented.
-    - [ ] Detailed logic for importing and cleaning data from a Calibre `metadata.db` file is designed. (`IMPORT_LOGIC.md`)
-    - [ ] The import logic for cleaning author names, titles, and resolving file paths is documented.
-    - [ ] Conflict resolution (handling duplicates) strategy is defined.
+    - [x] A detailed, extensible SQLite schema is designed to support multiple media types. (`DATABASE_SCHEMA.md`)
+    - [x] The schema design is documented.
+    - [x] Detailed logic for importing and cleaning data from a Calibre `metadata.db` file is designed. (`IMPORT_LOGIC.md`)
+    - [x] The import logic for cleaning author names, titles, and resolving file paths is documented.
+    - [x] Conflict resolution (handling duplicates) strategy is defined.
 
 ## Details
 This is a core design task for the application's data layer.
