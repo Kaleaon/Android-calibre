@@ -11,11 +11,11 @@ import javax.inject.Singleton
 @Singleton
 class CalibreImportService @Inject constructor(
     private val mediaItemDao: MediaItemDao,
-    private val metadataDao: MetadataDao
+    private val metadataDao: MetadataDao,
+    private val calibreReader: CalibreDatabaseReader
 ) {
 
     suspend fun importCalibreDatabase(calibreDbPath: String, libraryRootPath: String, libraryId: Long) {
-        val calibreReader = CalibreDatabaseReader()
         val rawBooks = calibreReader.readBooks(calibreDbPath)
 
         for ((_, rawBook) in rawBooks) {
@@ -62,7 +62,7 @@ class CalibreImportService @Inject constructor(
     }
 
     private fun cleanTitle(rawTitle: String): String {
-        return rawTitle.split(' ').joinToString(" ") { it.myCapitalize() }
+        return rawTitle.split(' ').joinToString(" ") { it.lowercase().myCapitalize() }
     }
 
     private fun createSortTitle(title: String): String {
@@ -76,18 +76,29 @@ class CalibreImportService @Inject constructor(
     }
 
     private fun cleanAuthorName(rawName: String): People {
-        val nameParts = if (rawName.contains(",")) {
-            rawName.split(",").map { it.trim() }
-        } else {
-            val parts = rawName.split(" ").map { it.trim() }
-            listOf(parts.dropLast(1).joinToString(" "), parts.last())
+        if (rawName.isBlank()) {
+            return People(0, "Unknown", "Unknown")
         }
-        val firstName = nameParts.getOrNull(1)?.myCapitalize() ?: ""
-        val lastName = nameParts.getOrNull(0)?.myCapitalize() ?: ""
-        val cleanName = "$firstName $lastName".trim()
-        val sortName = "$lastName, $firstName".trim()
-        return People(personId = 0, name = cleanName, sortName = sortName)
+
+        val name = rawName.trim()
+        if (!name.contains(" ") && !name.contains(",")) {
+            val capitalizedName = name.myCapitalize()
+            return People(0, capitalizedName, "$capitalizedName, ")
+        }
+
+        if (name.contains(",")) {
+            val parts = name.split(",").map { it.trim() }
+            val lastName = parts.getOrNull(0)?.myCapitalize() ?: ""
+            val firstName = parts.getOrNull(1)?.myCapitalize() ?: ""
+            return People(0, "$firstName $lastName".trim(), "$lastName, $firstName".trim())
+        }
+
+        val parts = name.split(" ").map { it.trim() }
+        val lastName = parts.last().myCapitalize()
+        val firstName = parts.dropLast(1).joinToString(" ")
+        return People(0, name, "$lastName, $firstName".trim())
     }
+
 
     private fun String.myCapitalize(): String {
         if (this.isEmpty()) return ""
