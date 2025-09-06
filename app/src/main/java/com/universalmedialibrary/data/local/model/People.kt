@@ -8,5 +8,5 @@ data class People(
     @PrimaryKey(autoGenerate = true)
     val personId: Long = 0,
     val name: String,
-    val sortName: String?
+    val sortName: String?,
 )

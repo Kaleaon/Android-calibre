@@ -5,7 +5,7 @@ enum class MediaType {
     MOVIE,
     MUSIC_TRACK,
     PODCAST_EPISODE,
-    COMIC
+    COMIC,
 }
 
 data class MediaItem(
@@ -14,5 +14,5 @@ data class MediaItem(
     val filePath: String,
     val mediaType: MediaType,
     val dateAdded: Long,
-    val dateModified: Long
+    val dateModified: Long,
 )

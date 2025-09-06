@@ -8,7 +8,6 @@ import com.universalmedialibrary.data.local.model.*
 
 @Dao
 interface MetadataDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMetadataCommon(metadataCommon: MetadataCommon)
 
@@ -43,5 +42,8 @@ interface MetadataDao {
     suspend fun insertSeries(series: Series): Long
 
     @Query("UPDATE metadata_book SET seriesId = :seriesId WHERE itemId = :itemId")
-    suspend fun updateBookWithSeries(itemId: Long, seriesId: Long)
+    suspend fun updateBookWithSeries(
+        itemId: Long,
+        seriesId: Long,
+    )
 }

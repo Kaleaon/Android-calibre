@@ -16,29 +16,24 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            AppDatabase.DATABASE_NAME
-        ).build()
-    }
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+    ): AppDatabase =
+        Room
+            .databaseBuilder(
+                context,
+                AppDatabase::class.java,
+                AppDatabase.DATABASE_NAME,
+            ).build()
 
     @Provides
-    fun provideLibraryDao(appDatabase: AppDatabase): LibraryDao {
-        return appDatabase.libraryDao()
-    }
+    fun provideLibraryDao(appDatabase: AppDatabase): LibraryDao = appDatabase.libraryDao()
 
     @Provides
-    fun provideMediaItemDao(appDatabase: AppDatabase): MediaItemDao {
-        return appDatabase.mediaItemDao()
-    }
+    fun provideMediaItemDao(appDatabase: AppDatabase): MediaItemDao = appDatabase.mediaItemDao()
 
     @Provides
-    fun provideMetadataDao(appDatabase: AppDatabase): MetadataDao {
-        return appDatabase.metadataDao()
-    }
+    fun provideMetadataDao(appDatabase: AppDatabase): MetadataDao = appDatabase.metadataDao()
 }

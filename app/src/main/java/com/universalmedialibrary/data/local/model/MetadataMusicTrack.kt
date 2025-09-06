@@ -11,16 +11,16 @@ import androidx.room.PrimaryKey
             entity = MediaItem::class,
             parentColumns = ["itemId"],
             childColumns = ["itemId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = Album::class,
             parentColumns = ["albumId"],
             childColumns = ["albumId"],
-            onDelete = ForeignKey.SET_NULL // If an album is deleted, we don't want to delete the track
-        )
+            onDelete = ForeignKey.SET_NULL, // If an album is deleted, we don't want to delete the track
+        ),
     ],
-    indices = [androidx.room.Index(value = ["albumId"])]
+    indices = [androidx.room.Index(value = ["albumId"])],
 )
 data class MetadataMusicTrack(
     @PrimaryKey
@@ -28,5 +28,5 @@ data class MetadataMusicTrack(
     val albumId: Long?,
     val trackNumber: Int?,
     val discNumber: Int?,
-    val duration: Int? // in seconds
+    val duration: Int?, // in seconds
 )

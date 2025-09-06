@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface LibraryDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLibrary(library: Library)
 

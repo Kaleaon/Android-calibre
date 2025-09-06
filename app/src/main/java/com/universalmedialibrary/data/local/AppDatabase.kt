@@ -20,15 +20,16 @@ import com.universalmedialibrary.data.local.model.*
         ItemGenre::class,
         People::class,
         ItemPersonRole::class,
-        Series::class
+        Series::class,
     ],
     version = 1,
-    exportSchema = false // For now, we can disable schema exporting
+    exportSchema = false, // For now, we can disable schema exporting
 )
 abstract class AppDatabase : RoomDatabase() {
-
     abstract fun libraryDao(): LibraryDao
+
     abstract fun mediaItemDao(): MediaItemDao
+
     abstract fun metadataDao(): MetadataDao
 
     companion object {

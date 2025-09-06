@@ -12,17 +12,20 @@ import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
-class LibraryDetailsViewModel @Inject constructor(
-    private val mediaItemDao: MediaItemDao,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
+class LibraryDetailsViewModel
+    @Inject
+    constructor(
+        private val mediaItemDao: MediaItemDao,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel() {
+        private val libraryId: Long = savedStateHandle.get<String>("libraryId")?.toLong() ?: 0
 
-    private val libraryId: Long = savedStateHandle.get<String>("libraryId")?.toLong() ?: 0
-
-    val bookDetails: StateFlow<List<BookDetails>> = mediaItemDao.getBookDetailsForLibrary(libraryId)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
-}
+        val bookDetails: StateFlow<List<BookDetails>> =
+            mediaItemDao
+                .getBookDetailsForLibrary(libraryId)
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = emptyList(),
+                )
+    }

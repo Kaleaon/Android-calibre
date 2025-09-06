@@ -11,10 +11,10 @@ import androidx.room.PrimaryKey
             entity = MediaItem::class,
             parentColumns = ["itemId"],
             childColumns = ["itemId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
         // We will add a foreign key to a 'Series' table later
-    ]
+    ],
 )
 data class MetadataBook(
     @PrimaryKey
@@ -23,5 +23,5 @@ data class MetadataBook(
     val publisher: String?,
     val isbn: String?,
     val pageCount: Int?,
-    val seriesId: Long?
+    val seriesId: Long?,
 )

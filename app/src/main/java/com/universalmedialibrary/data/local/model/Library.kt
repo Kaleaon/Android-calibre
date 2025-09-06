@@ -9,5 +9,5 @@ data class Library(
     val libraryId: Long = 0,
     val name: String,
     val type: String, // e.g., 'BOOK', 'MOVIE', 'MUSIC'
-    val path: String
+    val path: String,
 )

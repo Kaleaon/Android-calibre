@@ -5,5 +5,5 @@ data class Book(
     val subtitle: String?,
     val isbn: String?,
     val pageCount: Int?,
-    val publisher: String?
+    val publisher: String?,
 )

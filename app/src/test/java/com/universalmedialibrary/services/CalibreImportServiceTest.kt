@@ -12,7 +12,6 @@ import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
 
 class CalibreImportServiceTest {
-
     @get:Rule
     val mockitoRule: MockitoRule = MockitoJUnit.rule()
 

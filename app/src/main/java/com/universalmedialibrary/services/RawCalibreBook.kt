@@ -10,5 +10,5 @@ data class RawCalibreBook(
     val publisher: String?,
     val isbn: String?,
     val tags: List<String>,
-    val comments: String?
+    val comments: String?,
 )

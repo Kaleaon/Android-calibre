@@ -2,51 +2,106 @@ name: Android CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
 
-      # Use a consistent JDK version (AGP 8.x requires JDK 17)
+      # Use Java 17 for AGP 8.x compatibility
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-          # Important: do not enable 'cache: gradle' here when using the Gradle action below
 
       # Official Gradle action: handles wrapper, dependency and configuration caching safely
-      - uses: gradle/actions/setup-gradle@v3
+      - uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
-      # Install only the SDK components you need. Avoid caching the SDK/NDK.
+      # Install only the SDK components needed
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
           packages: |
             platform-tools
-            platforms;android-34
-            build-tools;34.0.0
+            platforms;android-35
+            build-tools;35.0.0
 
-      # Optional: if NDK is needed, add a specific version (don’t cache it)
-      # - name: Install NDK
-      #   run: sdkmanager "ndk;26.1.10909125"
-
-      # One-time cache reset (uncomment only if you suspect corruption)
-      # - name: Reset Gradle caches for this run
-      #   run: |
-      #     rm -rf ~/.gradle/caches ~/.gradle/kotlin ~/.gradle/daemon
-
-      - name: Build
+      - name: Build Debug APK
         run: ./gradlew --no-daemon --stacktrace assembleDebug
 
-      - name: Unit tests
+      - name: Run Unit Tests
         run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
 
-      # If you use lint or detekt, add them as separate steps:
-       - run: ./gradlew --no-daemon --stacktrace lint
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            app/build/reports/tests/
+            app/build/test-results/
+
+  lint:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
+
+      - name: Run Android Lint
+        run: ./gradlew --no-daemon --stacktrace lint
+
+      - name: Upload Lint Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-results
+          path: app/build/reports/lint-results*.html
+
+  static-analysis:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Run ktlint
+        run: ./gradlew --no-daemon --continue ktlintCheck
+
+      - name: Upload ktlint Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ktlint-results
+          path: app/build/reports/ktlint/

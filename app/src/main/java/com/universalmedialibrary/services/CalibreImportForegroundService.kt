@@ -18,13 +18,16 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class CalibreImportForegroundService : Service() {
-
     @Inject
     lateinit var calibreImportService: CalibreImportService
 
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         val calibreDbPath = intent?.getStringExtra(EXTRA_DB_PATH) ?: return START_NOT_STICKY
         val libraryRootPath = intent?.getStringExtra(EXTRA_ROOT_PATH) ?: return START_NOT_STICKY
         val libraryId = intent.getLongExtra(EXTRA_LIBRARY_ID, -1)
@@ -50,38 +53,43 @@ class CalibreImportForegroundService : Service() {
         createNotificationChannel()
         // NOTE: This assumes a placeholder icon exists at R.drawable.ic_import_export
         // In a real scenario, this resource would need to be added.
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat
+            .Builder(this, CHANNEL_ID)
             .setContentTitle("Library Import")
             .setContentText(contentText)
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .build()
     }
 
-    private fun updateNotification(title: String, contentText: String) {
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(title)
-            .setContentText(contentText)
-            .setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .build()
+    private fun updateNotification(
+        title: String,
+        contentText: String,
+    ) {
+        val notification =
+            NotificationCompat
+                .Builder(this, CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(contentText)
+                .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                .build()
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                CHANNEL_ID,
-                "Calibre Import Service Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
+            val serviceChannel =
+                NotificationChannel(
+                    CHANNEL_ID,
+                    "Calibre Import Service Channel",
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                )
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(serviceChannel)
         }
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+    override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
         const val EXTRA_DB_PATH = "EXTRA_DB_PATH"

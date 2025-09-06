@@ -4,8 +4,9 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
-
+class DatabaseHelper(
+    context: Context,
+) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
     companion object {
         const val DATABASE_NAME = "universalmedialibrary.db"
         const val DATABASE_VERSION = 1
@@ -20,7 +21,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         db?.execSQL(DatabaseSchema.SQL_CREATE_MEDIA_ITEM_TAG_JOIN)
     }
 
-    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
+    override fun onUpgrade(
+        db: SQLiteDatabase?,
+        oldVersion: Int,
+        newVersion: Int,
+    ) {
         // For now, we'll just drop and recreate the database on upgrade.
         // A real migration strategy would be needed for a production app.
         db?.execSQL("DROP TABLE IF EXISTS media_item_tag_join")

@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MediaItemDao {
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMediaItem(mediaItem: MediaItem): Long
 
@@ -20,7 +19,8 @@ interface MediaItemDao {
     @Query("SELECT * FROM media_items WHERE itemId = :itemId")
     suspend fun getMediaItemById(itemId: Long): MediaItem?
 
-    @Query("""
+    @Query(
+        """
         SELECT
             mi.itemId as media_itemId,
             mi.libraryId as media_libraryId,
@@ -42,6 +42,7 @@ interface MediaItemDao {
         LEFT JOIN item_person_role ipr ON mi.itemId = ipr.itemId AND ipr.role = 'AUTHOR'
         LEFT JOIN people p ON ipr.personId = p.personId
         WHERE mi.libraryId = :libraryId
-    """)
+    """,
+    )
     fun getBookDetailsForLibrary(libraryId: Long): Flow<List<BookDetails>>
 }

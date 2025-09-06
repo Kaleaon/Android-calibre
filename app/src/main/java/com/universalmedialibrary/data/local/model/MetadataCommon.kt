@@ -11,9 +11,9 @@ import androidx.room.PrimaryKey
             entity = MediaItem::class,
             parentColumns = ["itemId"],
             childColumns = ["itemId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
 )
 data class MetadataCommon(
     @PrimaryKey
@@ -24,5 +24,5 @@ data class MetadataCommon(
     val releaseDate: Long?,
     val rating: Float?,
     val summary: String?,
-    val coverImagePath: String?
+    val coverImagePath: String?,
 )
