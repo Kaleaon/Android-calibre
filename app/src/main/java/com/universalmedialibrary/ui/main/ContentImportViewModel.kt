@@ -34,7 +34,7 @@ class ContentImportViewModel @Inject constructor(
             }
 
             if (extractedContent != null) {
-                val safeTitle = extractedContent.title.replace(Regex("[^a-zA-Z0-9]"), "_")
+                val safeTitle = extractedContent.title.replace(Regex("[/\\\\?%*:|\"<>]"), "_")
                 val fileName = "${safeTitle}.epub"
                 val file = File(context.filesDir, fileName)
 
