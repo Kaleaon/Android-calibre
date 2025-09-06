@@ -4,7 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.universalmedialibrary.data.local.dao.MediaItemDao
-import com.universalmedialibrary.data.local.model.MediaItem
+import com.universalmedialibrary.data.local.model.BookDetails
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,12 +14,12 @@ import javax.inject.Inject
 @HiltViewModel
 class LibraryDetailsViewModel @Inject constructor(
     private val mediaItemDao: MediaItemDao,
-    private val savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val libraryId: Long = savedStateHandle.get<String>("libraryId")?.toLong() ?: 0
 
-    val mediaItems: StateFlow<List<MediaItem>> = mediaItemDao.getMediaItemsForLibrary(libraryId)
+    val bookDetails: StateFlow<List<BookDetails>> = mediaItemDao.getBookDetailsForLibrary(libraryId)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

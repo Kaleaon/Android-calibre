@@ -3,13 +3,12 @@ package com.universalmedialibrary
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Book
@@ -20,15 +19,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.universalmedialibrary.data.local.model.BookDetails
 import com.universalmedialibrary.data.local.model.Library
-import com.universalmedialibrary.data.local.model.MediaItem
 import com.universalmedialibrary.ui.details.LibraryDetailsViewModel
 import com.universalmedialibrary.ui.main.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -101,13 +102,69 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
 
 @Composable
 fun LibraryDetailsScreen(viewModel: LibraryDetailsViewModel = hiltViewModel()) {
-    val mediaItems by viewModel.mediaItems.collectAsState()
-    LazyColumn(
+    val bookDetails by viewModel.bookDetails.collectAsState()
+
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 128.dp),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(mediaItems) { item ->
-            Text(text = item.filePath)
+        items(bookDetails) { book ->
+            BookCard(book = book)
+        }
+    }
+}
+
+@Composable
+fun BookCard(book: BookDetails) {
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column {
+            PlaceholderCover(
+                title = book.metadata.title,
+                author = book.authorName
+            )
+            Text(
+                text = book.metadata.title,
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun PlaceholderCover(title: String, author: String?) {
+    val colors = listOf(
+        Color(0xFFE57373), Color(0xFF81C784), Color(0xFF64B5F6),
+        Color(0xFFF06292), Color(0xFF4DB6AC), Color(0xFFFFD54F)
+    )
+    val color = colors[title.hashCode() % colors.size]
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .background(color),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                color = Color.White
+            )
+            if (author != null) {
+                Text(
+                    text = author,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = Color.White
+                )
+            }
         }
     }
 }
