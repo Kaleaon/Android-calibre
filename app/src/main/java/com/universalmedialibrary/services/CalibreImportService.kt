@@ -37,7 +37,7 @@ class CalibreImportService @Inject constructor(
         for ((_, rawBook) in rawBooks) {
             val fullPath = resolveFullPath(libraryRootPath, rawBook.path)
             if (fullPath == null || !File(fullPath).exists()) {
-                continue // Skip if the file doesn't exist
+                continue
             }
 
             val cleanedTitle = cleanTitle(rawBook.title)
