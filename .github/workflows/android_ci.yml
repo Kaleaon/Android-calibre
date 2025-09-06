@@ -57,7 +57,7 @@ jobs:
           file: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
           fail_ci_if_error: false
 
-      - name: Instrumentation tests  
+      - name: Instrumentation tests
         run: ./gradlew --no-daemon --stacktrace connectedDebugAndroidTest
 
       # If you use lint or detekt, add them as separate steps:
