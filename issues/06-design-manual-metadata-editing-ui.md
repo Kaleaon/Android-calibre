@@ -1,6 +1,6 @@
 # Issue: Design Manual Metadata Editing UI
 
-**Status:** In Progress
+**Status:** Completed
 
 ## User Story
 As a user, I want a powerful and intuitive screen to manually edit all the metadata for my media items, so I have full control over my library's accuracy and presentation.
@@ -9,12 +9,12 @@ As a user, I want a powerful and intuitive screen to manually edit all the metad
 - **Benefit for the user:** This gives users ultimate control over their library, allowing them to fix any errors from automated scanners or to add personal notes and tags, making the library truly their own.
 - **Ease of use:** The editing screen should be clearly laid out and easy to navigate, with appropriate input controls for each type of metadata.
 - **Criteria:**
-    - [ ] Mockups and specifications for the metadata editing screen are created.
-    - [ ] The layout is designed to be responsive for both phones and tablets.
-    - [ ] UI components for each metadata field (text input, chip-based input, star rating, etc.) are defined.
-    - [ ] A "before and after" review feature is designed to help users verify automated changes.
-    - [ ] The data flow (load, save, cancel) is defined.
-    - [ ] The design is documented in `UI_DESIGN_METADATA_EDITOR.md`.
+    - [x] Mockups and specifications for the metadata editing screen are created.
+    - [x] The layout is designed to be responsive for both phones and tablets.
+    - [x] UI components for each metadata field (text input, chip-based input, star rating, etc.) are defined.
+    - [x] A "before and after" review feature is designed to help users verify automated changes.
+    - [x] The data flow (load, save, cancel) is defined.
+    - [x] The design is documented in `UI_DESIGN_METADATA_EDITOR.md`.
 
 ## Details
 The design and specifications for this screen are outlined in `UI_DESIGN_METADATA_EDITOR.md`.
@@ -33,6 +33,6 @@ The design and specifications for this screen are outlined in `UI_DESIGN_METADAT
 
 ## Labels
 - `phase-2-architecture`
-- `status-in-progress`
+- `status-completed`
 - `ui-design`
 - `feature-metadata-editing`
