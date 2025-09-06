@@ -80,12 +80,16 @@ class CalibreImportService @Inject constructor(
             rawName.split(",").map { it.trim() }
         } else {
             val parts = rawName.split(" ").map { it.trim() }
-            listOf(parts.dropLast(1).joinToString(" "), parts.last())
+            if (parts.size == 1) {
+                listOf(parts[0], "")
+            } else {
+                listOf(parts.last(), parts.dropLast(1).joinToString(" "))
+            }
         }
         val firstName = nameParts.getOrNull(1)?.myCapitalize() ?: ""
         val lastName = nameParts.getOrNull(0)?.myCapitalize() ?: ""
-        val cleanName = "$firstName $lastName".trim()
-        val sortName = "$lastName, $firstName".trim()
+        val cleanName = if (firstName.isBlank()) lastName else "$firstName $lastName".trim()
+        val sortName = if (firstName.isBlank()) lastName else "$lastName, $firstName"
         return People(personId = 0, name = cleanName, sortName = sortName)
     }
 
