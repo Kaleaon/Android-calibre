@@ -42,8 +42,17 @@ The goal is to convert various common formats into a standardized `(FirstName, L
 *   **Input:** The relative path from the Calibre `books` table (e.g., `J R R Tolkien/The Lord of the Rings (1)`) and the user-provided root library path.
 *   **Logic:**
     1.  Combine the root path and the relative path to get the full path to the book's folder.
-    2.  Scan the folder to find the actual e-book file (e.g., `.epub`, `.mobi`).
+    2.  Scan the folder to find the actual e-book file by searching for supported file extensions in a specific order of preference.
 *   **Output:** The absolute path to the e-book file for the `MediaItems.file_path` field.
+
+#### File Format Preference
+When a book's folder contains multiple files with different formats, the importer must have a clear preference to ensure consistency. The following ordered list will be used to select the best available file:
+1.  `.epub` (Highest preference; modern, reflowable, and feature-rich)
+2.  `.mobi` (Legacy Kindle format)
+3.  `.azw3` (Modern Kindle format)
+4.  `.pdf` (Common, but less ideal for reflowable text)
+5.  `.cbz` (For comics)
+6.  `.cbr` (For comics)
 
 ## Conflict Resolution
 
