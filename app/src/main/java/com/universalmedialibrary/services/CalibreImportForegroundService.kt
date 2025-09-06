@@ -25,10 +25,13 @@ class CalibreImportForegroundService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val calibreDbPath = intent?.getStringExtra(EXTRA_DB_PATH) ?: return START_NOT_STICKY
-        val libraryRootPath = intent?.getStringExtra(EXTRA_ROOT_PATH) ?: return START_NOT_STICKY
+        // Safety: Validate all required parameters
+        val calibreDbPath = intent?.getStringExtra(EXTRA_DB_PATH)?.takeIf { it.isNotBlank() } 
+            ?: return START_NOT_STICKY
+        val libraryRootPath = intent.getStringExtra(EXTRA_ROOT_PATH)?.takeIf { it.isNotBlank() } 
+            ?: return START_NOT_STICKY
         val libraryId = intent.getLongExtra(EXTRA_LIBRARY_ID, -1)
-        if (libraryId == -1L) return START_NOT_STICKY
+        if (libraryId <= 0) return START_NOT_STICKY
 
         startForeground(NOTIFICATION_ID, createNotification("Importing Calibre library..."))
 
@@ -37,7 +40,13 @@ class CalibreImportForegroundService : Service() {
                 calibreImportService.importCalibreDatabase(calibreDbPath, libraryRootPath, libraryId)
                 updateNotification("Import complete!", "Successfully imported your Calibre library.")
             } catch (e: Exception) {
-                updateNotification("Import failed", e.message ?: "An unknown error occurred.")
+                // Safety: Provide meaningful error messages
+                val errorMessage = when (e) {
+                    is SecurityException -> "Permission denied accessing files"
+                    is java.io.FileNotFoundException -> "Database or library files not found"
+                    else -> e.message ?: "An unknown error occurred"
+                }
+                updateNotification("Import failed", errorMessage)
             } finally {
                 stopSelf()
             }

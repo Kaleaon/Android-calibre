@@ -17,7 +17,10 @@ class LibraryDetailsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val libraryId: Long = savedStateHandle.get<String>("libraryId")?.toLong() ?: 0
+    // Safety: Handle navigation parameter safely with proper validation
+    private val libraryId: Long = savedStateHandle.get<String>("libraryId")
+        ?.toLongOrNull()
+        ?.takeIf { it > 0 } ?: 1L // Default to library ID 1 if invalid
 
     val bookDetails: StateFlow<List<BookDetails>> = mediaItemDao.getBookDetailsForLibrary(libraryId)
         .stateIn(

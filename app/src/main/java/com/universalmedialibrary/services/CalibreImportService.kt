@@ -108,13 +108,26 @@ class CalibreImportService @Inject constructor(
     }
 
     private fun resolveFullPath(libraryRootPath: String, relativePath: String): String? {
-        val file = File(libraryRootPath, relativePath)
-        if (file.isDirectory) {
-            return file.listFiles()
-                ?.firstOrNull { it.extension in listOf("epub", "mobi", "pdf") }
-                ?.absolutePath
+        // Safety: Validate inputs
+        if (libraryRootPath.isBlank() || relativePath.isBlank()) {
+            return null
         }
-        return file.absolutePath
+        
+        return try {
+            val file = File(libraryRootPath, relativePath)
+            if (file.isDirectory) {
+                file.listFiles()
+                    ?.firstOrNull { it.extension.lowercase() in listOf("epub", "mobi", "pdf") }
+                    ?.absolutePath
+            } else if (file.exists()) {
+                file.absolutePath
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            // Safety: Handle file system errors gracefully
+            null
+        }
     }
 
     private fun cleanTitle(rawTitle: String): String {

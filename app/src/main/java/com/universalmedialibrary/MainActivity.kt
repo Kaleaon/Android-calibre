@@ -1,8 +1,13 @@
 package com.universalmedialibrary
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -36,10 +41,6 @@ import com.universalmedialibrary.services.CalibreImportForegroundService
 import com.universalmedialibrary.ui.details.LibraryDetailsViewModel
 import com.universalmedialibrary.ui.main.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import android.content.Intent
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -85,7 +86,12 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
                     // would have the user select or create a library first.
                     putExtra(CalibreImportForegroundService.EXTRA_LIBRARY_ID, 1L)
                 }
-                context.startForegroundService(intent)
+                // Safety: Use proper API level check for startForegroundService
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
                 dbFileUri = null // Reset for next time
             }
         }

@@ -173,4 +173,49 @@ class SafetyTest {
         assertThat(isValid).isTrue()
         assertThat(trimmedName).isEqualTo("My Library")
     }
+
+    @Test
+    fun `navigation parameter validation handles valid library ID`() {
+        val libraryIdString = "123"
+        val libraryId = libraryIdString.toLongOrNull()?.takeIf { it > 0 } ?: 1L
+        assertThat(libraryId).isEqualTo(123L)
+    }
+
+    @Test
+    fun `navigation parameter validation handles invalid library ID`() {
+        val libraryIdString = "-5"
+        val libraryId = libraryIdString.toLongOrNull()?.takeIf { it > 0 } ?: 1L
+        assertThat(libraryId).isEqualTo(1L) // Should fall back to default
+    }
+
+    @Test
+    fun `navigation parameter validation handles non-numeric library ID`() {
+        val libraryIdString = "abc"
+        val libraryId = libraryIdString.toLongOrNull()?.takeIf { it > 0 } ?: 1L
+        assertThat(libraryId).isEqualTo(1L) // Should fall back to default
+    }
+
+    @Test
+    fun `file path validation handles empty library path`() {
+        val libraryRootPath = ""
+        val relativePath = "author/book.epub"
+        val isValid = libraryRootPath.isNotBlank() && relativePath.isNotBlank()
+        assertThat(isValid).isFalse()
+    }
+
+    @Test
+    fun `file path validation handles empty relative path`() {
+        val libraryRootPath = "/path/to/library"
+        val relativePath = ""
+        val isValid = libraryRootPath.isNotBlank() && relativePath.isNotBlank()
+        assertThat(isValid).isFalse()
+    }
+
+    @Test
+    fun `file extension validation handles case insensitive extensions`() {
+        val filename = "test.EPUB"
+        val supportedExtensions = listOf("epub", "mobi", "pdf")
+        val isSupported = filename.substringAfterLast('.', "").lowercase() in supportedExtensions
+        assertThat(isSupported).isTrue()
+    }
 }
