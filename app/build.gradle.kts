@@ -125,4 +125,19 @@ detekt {
     config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
     buildUponDefaultConfig = true
     autoCorrect = true
+    ignoredBuildTypes = listOf("release")
+    ignoredFlavors = listOf("production")
+}
+
+// Custom tasks for convenience
+tasks.register("staticAnalysis") {
+    group = "verification"
+    description = "Run all static analysis tools"
+    dependsOn("ktlintCheck", "detekt", "lint")
+}
+
+tasks.register("formatCode") {
+    group = "formatting"
+    description = "Format code with ktlint"
+    dependsOn("ktlintFormat")
 }

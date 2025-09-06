@@ -48,5 +48,13 @@ jobs:
       - name: Unit tests
         run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
 
-      # If you use lint or detekt, add them as separate steps:
-       - run: ./gradlew --no-daemon --stacktrace lint
+      # Static analysis
+      - name: ktlint check
+        run: ./gradlew --no-daemon --stacktrace ktlintCheck
+
+      - name: detekt check
+        run: ./gradlew --no-daemon --stacktrace detekt
+
+      # Android lint
+      - name: Android lint
+        run: ./gradlew --no-daemon --stacktrace lint
