@@ -17,7 +17,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       # Official Gradle action: handles wrapper, dependency and configuration caching safely
       - uses: gradle/actions/setup-gradle@v3
