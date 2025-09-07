@@ -1,8 +1,14 @@
-# Project Plan: Universal Media Library for Android
+<p align="center">
+  <img src="./logo.png" alt="CleverFerret logo" width="160">
+</p>
+
+<h1 align="center">CleverFerret</h1>
+
+<p align="center">A comprehensive Universal Media Library for Android</p>
 
 ## 1. High-Level Vision
 
-The goal is to create a new, fully self-contained, native Android application for managing a user's complete media library directly on their device. This includes books, comics, music, movies, podcasts, and more. The application will feature a modern, extensible, and user-friendly interface for organizing, viewing, and consuming all types of media, with powerful tools for metadata management.
+CleverFerret is a fully self-contained, native Android application for managing a user's complete media library directly on their device. This includes books, comics, music, movies, podcasts, and more. The application features a modern, extensible, and user-friendly interface for organizing, viewing, and consuming all types of media, with powerful tools for metadata management.
 
 ---
 
