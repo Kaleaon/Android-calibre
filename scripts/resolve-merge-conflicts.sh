@@ -4,7 +4,11 @@
 # This script uses the GitHub API to help resolve merge conflicts automatically
 
 # GitHub Personal Access Token
-GITHUB_TOKEN="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"
+# Expect GITHUB_TOKEN to be set in the environment
+if [ -z "$GITHUB_TOKEN" ]; then
+    echo "Error: GITHUB_TOKEN environment variable is not set."
+    exit 1
+fi
 
 # Get repository information
 REPO_OWNER="$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f1)"
