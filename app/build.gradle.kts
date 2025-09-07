@@ -95,6 +95,9 @@ dependencies {
     // HTML rendering and text processing
     implementation("androidx.compose.ui:ui-text-google-fonts")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+    
+    // Audio processing for enhanced TTS (placeholder for future Coqui integration)
+    implementation("androidx.media:media:1.7.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("androidx.test.ext:junit:1.1.5")

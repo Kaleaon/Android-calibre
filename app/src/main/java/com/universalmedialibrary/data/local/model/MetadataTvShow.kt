@@ -5,7 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "metadata_movie",
+    tableName = "metadata_tv_show",
     foreignKeys = [
         ForeignKey(
             entity = MediaItem::class,
@@ -15,17 +15,16 @@ import androidx.room.PrimaryKey
         )
     ]
 )
-data class MetadataMovie(
+data class MetadataTvShow(
     @PrimaryKey
     val itemId: Long,
-    val tagline: String? = null,
-    val runtime: Int? = null, // in minutes
-    val director: String? = null,
-    val rating: String? = null,
-    val releaseYear: Int? = null,
-    val productionCompany: String? = null,
-    val budget: Long? = null,
-    val boxOffice: Long? = null,
-    val imdbId: String? = null,
-    val tmdbId: String? = null
+    val seasonNumber: Int? = null,
+    val episodeNumber: Int? = null,
+    val seriesName: String? = null,
+    val network: String? = null,
+    val airDate: String? = null,
+    val episodeRuntime: Int? = null,
+    val tvRating: String? = null,
+    val tvdbId: String? = null,
+    val imdbId: String? = null
 )
