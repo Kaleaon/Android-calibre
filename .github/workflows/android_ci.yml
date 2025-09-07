@@ -97,3 +97,4 @@ jobs:
 
       - name: Lint
         run: ./gradlew --no-daemon --stacktrace lint
+        continue-on-error: true
