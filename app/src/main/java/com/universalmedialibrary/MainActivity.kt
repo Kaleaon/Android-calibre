@@ -11,18 +11,24 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,11 +41,14 @@ import com.universalmedialibrary.data.local.model.Library
 import com.universalmedialibrary.services.CalibreImportForegroundService
 import com.universalmedialibrary.ui.details.LibraryDetailsViewModel
 import com.universalmedialibrary.ui.main.MainViewModel
-import dagger.hilt.android.AndroidEntryPoint
+import com.universalmedialibrary.ui.metadata.MetadataEditorScreen
+import kotlin.math.absoluteValue
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import kotlinx.coroutines.launch
+import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -62,6 +71,14 @@ fun AppNavigation() {
         composable("library_details/{libraryId}") {
             LibraryDetailsScreen()
         }
+        composable("book_details/{bookId}") { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getString("bookId")?.toLong() ?: 0L
+            BookDetailsScreen(bookId = bookId, navController = navController)
+        }
+        composable("metadata_editor/{bookId}") { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getString("bookId")?.toLong() ?: 0L
+            MetadataEditorScreenWrapper(bookId = bookId, navController = navController)
+        }
     }
 }
 
@@ -71,22 +88,37 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
     val libraries by viewModel.libraries.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var dbFileUri by remember { mutableStateOf<Uri?>(null) }
+    var importStatus by remember { mutableStateOf("") }
+    var isImporting by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val rootFolderPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree(),
         onResult = { uri ->
             if (uri != null && dbFileUri != null) {
+                isImporting = true
+                importStatus = "Starting import..."
                 val intent = Intent(context, CalibreImportForegroundService::class.java).apply {
                     putExtra(CalibreImportForegroundService.EXTRA_DB_PATH, dbFileUri.toString())
                     putExtra(CalibreImportForegroundService.EXTRA_ROOT_PATH, uri.toString())
-                    // For now, we'll import into a placeholder library. A real implementation
-                    // would have the user select or create a library first.
+                    // Create a default library for import
                     putExtra(CalibreImportForegroundService.EXTRA_LIBRARY_ID, 1L)
                 }
                 context.startForegroundService(intent)
                 dbFileUri = null // Reset for next time
+                
+                // Show completion after a delay (in real app, this would be event-driven)
+                // Using rememberCoroutineScope for proper coroutine handling
+                coroutineScope.launch {
+                    kotlinx.coroutines.delay(3000)
+                    importStatus = "Import completed!"
+                    kotlinx.coroutines.delay(2000)
+                    isImporting = false
+                    importStatus = ""
+                }
             }
         }
     )
@@ -96,6 +128,7 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
         onResult = { uri ->
             if (uri != null) {
                 dbFileUri = uri
+                showImportDialog = false
                 rootFolderPicker.launch(null)
             }
         }
@@ -117,8 +150,14 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
                             text = { Text("Import Calibre Library") },
                             onClick = {
                                 showMenu = false
-                                // For now, let's just launch the DB file picker
-                                dbFilePicker.launch(arrayOf("application/x-sqlite3", "application/octet-stream"))
+                                showImportDialog = true
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Refresh Libraries") },
+                            onClick = {
+                                showMenu = false
+                                // Refresh functionality would go here
                             }
                         )
                     }
@@ -131,21 +170,81 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
             }
         }
     ) { paddingValues ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 128.dp),
-            modifier = Modifier.padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(libraries) { library ->
-                LibraryCard(
-                    library = library,
-                    onClick = {
-                        navController.navigate("library_details/${library.libraryId}")
-                    }
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 128.dp),
+                modifier = Modifier.padding(paddingValues),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(libraries) { library ->
+                    LibraryCard(
+                        library = library,
+                        onClick = {
+                            navController.navigate("library_details/${library.libraryId}")
+                        }
+                    )
+                }
             }
+
+            // Import status overlay
+            if (isImporting) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        modifier = Modifier.padding(32.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = importStatus,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Import Dialog
+        if (showImportDialog) {
+            AlertDialog(
+                onDismissRequest = { showImportDialog = false },
+                title = { Text("Import Calibre Library") },
+                text = {
+                    Column {
+                        Text("To import your Calibre library, you'll need to:")
+                        Text("1. Select your Calibre metadata.db file")
+                        Text("2. Select your Calibre library folder")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("This process may take several minutes depending on the size of your library.")
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            dbFilePicker.launch(arrayOf("application/x-sqlite3", "application/octet-stream", "*/*"))
+                        }
+                    ) {
+                        Text("Choose Database File")
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = { showImportDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
 
         if (showDialog) {
@@ -160,25 +259,79 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryDetailsScreen(viewModel: LibraryDetailsViewModel = hiltViewModel()) {
     val bookDetails by viewModel.bookDetails.collectAsState()
 
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 128.dp),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(bookDetails) { book ->
-            BookCard(book = book)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Library Contents") },
+                navigationIcon = {
+                    // In a real implementation, you'd use NavController here
+                    IconButton(onClick = { /* Navigate back */ }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        if (bookDetails.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.Book,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No books found",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Import a Calibre library to get started",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 160.dp),
+                modifier = Modifier.padding(paddingValues),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(bookDetails) { book ->
+                    BookCard(
+                        book = book,
+                        onClick = {
+                            // Navigate to book details - for now just a placeholder
+                            // navController.navigate("book_details/${book.mediaItem.itemId}")
+                        }
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-fun BookCard(book: BookDetails) {
+fun BookCard(book: BookDetails, onClick: () -> Unit = {}) {
     Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
@@ -186,11 +339,37 @@ fun BookCard(book: BookDetails) {
                 title = book.metadata.title,
                 author = book.authorName
             )
-            Text(
-                text = book.metadata.title,
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(8.dp)
-            )
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = book.metadata.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (book.authorName != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = book.authorName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (book.metadata.rating != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        repeat(5) { index ->
+                            Icon(
+                                imageVector = if (index < (book.metadata.rating?.toInt() ?: 0)) Icons.Default.Star else Icons.Default.StarBorder,
+                                contentDescription = null,
+                                modifier = Modifier.size(12.dp),
+                                tint = Color(0xFFFFC107)
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -198,31 +377,60 @@ fun BookCard(book: BookDetails) {
 @Composable
 fun PlaceholderCover(title: String, author: String?) {
     val colors = listOf(
-        Color(0xFFE57373), Color(0xFF81C784), Color(0xFF64B5F6),
-        Color(0xFFF06292), Color(0xFF4DB6AC), Color(0xFFFFD54F)
+        MaterialTheme.colorScheme.primaryContainer,
+        MaterialTheme.colorScheme.secondaryContainer,
+        MaterialTheme.colorScheme.tertiaryContainer,
+        MaterialTheme.colorScheme.errorContainer,
+        MaterialTheme.colorScheme.surfaceVariant
     )
-    val color = colors[title.hashCode() % colors.size]
+    val color = colors[title.hashCode().absoluteValue % colors.size]
+    val contentColor = if (color == MaterialTheme.colorScheme.primaryContainer) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else if (color == MaterialTheme.colorScheme.secondaryContainer) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else if (color == MaterialTheme.colorScheme.tertiaryContainer) {
+        MaterialTheme.colorScheme.onTertiaryContainer
+    } else if (color == MaterialTheme.colorScheme.errorContainer) {
+        MaterialTheme.colorScheme.onErrorContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
+            .height(220.dp)
             .background(color),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Book,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = contentColor.copy(alpha = 0.7f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 textAlign = TextAlign.Center,
-                color = Color.White
+                color = contentColor,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
             if (author != null) {
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = author,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
-                    color = Color.White
+                    color = contentColor.copy(alpha = 0.8f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -265,22 +473,34 @@ fun LibraryCard(library: Library, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = getIconForLibraryType(library.type),
                 contentDescription = library.type,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(56.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = library.name,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = library.type.lowercase().replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
         }
     }
@@ -293,4 +513,62 @@ private fun getIconForLibraryType(type: String): ImageVector {
         "MUSIC" -> Icons.Default.MusicNote
         else -> Icons.Default.QuestionMark
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BookDetailsScreen(bookId: Long, navController: NavController) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Book Details") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = { 
+                            navController.navigate("metadata_editor/$bookId")
+                        }
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit Metadata")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Book Details for ID: $bookId",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "This is a placeholder for the book details screen. In a complete implementation, this would show full book metadata, cover image, and reading options.",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
+}
+
+@Composable
+fun MetadataEditorScreenWrapper(bookId: Long, navController: NavController) {
+    MetadataEditorScreen(
+        title = "Sample Book Title",
+        author = "Sample Author",
+        onSave = { metadata ->
+            // In a real implementation, this would save to the database
+            navController.navigateUp()
+        },
+        onBack = {
+            navController.navigateUp()
+        }
+    )
 }

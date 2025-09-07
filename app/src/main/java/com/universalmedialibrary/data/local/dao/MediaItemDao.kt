@@ -20,6 +20,9 @@ interface MediaItemDao {
     @Query("SELECT * FROM media_items WHERE itemId = :itemId")
     suspend fun getMediaItemById(itemId: Long): MediaItem?
 
+    @Query("SELECT * FROM media_items WHERE filePath = :filePath")
+    suspend fun getMediaItemByFilePath(filePath: String): MediaItem?
+
     @Query("""
         SELECT
             mi.itemId as media_itemId,

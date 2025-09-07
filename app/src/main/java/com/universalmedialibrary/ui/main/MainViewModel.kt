@@ -23,6 +23,17 @@ class MainViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    init {
+        // Ensure there's at least a default library
+        viewModelScope.launch {
+            // Give time for flow to emit
+            kotlinx.coroutines.delay(100)
+            if (libraries.value.isEmpty()) {
+                addLibrary("My Books", "BOOK", "/storage/emulated/0/Books")
+            }
+        }
+    }
+
     fun addLibrary(name: String, type: String, path: String) {
         viewModelScope.launch {
             val newLibrary = Library(name = name, type = type, path = path)
