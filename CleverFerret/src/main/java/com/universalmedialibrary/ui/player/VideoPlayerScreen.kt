@@ -15,12 +15,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 
 /**
  * Video player screen using ExoPlayer
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, UnstableApi::class)
 @Composable
 fun VideoPlayerScreen(
     videoFilePath: String,
@@ -82,6 +83,7 @@ fun VideoPlayerScreen(
                         PlayerView(context).apply {
                             player = viewModel.getExoPlayer()
                             useController = true
+                            @Suppress("UnsafeOptInUsageError")
                             setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
                         }
                     },

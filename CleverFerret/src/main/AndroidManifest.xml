@@ -21,7 +21,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".services.CalibreImportForegroundService" />
+        <service 
+            android:name=".services.CalibreImportForegroundService"
+            android:foregroundServiceType="dataSync" />
     </application>
 
 </manifest>

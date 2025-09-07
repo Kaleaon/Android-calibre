@@ -1,7 +1,0 @@
-# Android CI Configuration
-
-# Install required Android SDK components
-sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
-# Build step
-# (Your existing build commands go here)
