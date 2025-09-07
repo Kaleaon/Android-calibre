@@ -44,7 +44,7 @@ jobs:
       #     rm -rf ~/.gradle/caches ~/.gradle/kotlin ~/.gradle/daemon
 
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew --no-daemon --stacktrace build
 
       - name: Unit tests
         run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
