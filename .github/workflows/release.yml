@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+      
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-34
+            build-tools;34.0.0
+      
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+      
+      - name: Get version name
+        id: version
+        run: echo "VERSION_NAME=$(grep 'versionName' app/build.gradle.kts | cut -d'"' -f2)" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            app/build/outputs/apk/release/app-release-unsigned.apk
+          name: Universal Media Library v${{ steps.version.outputs.VERSION_NAME }}
+          body: |
+            ## Universal Media Library v${{ steps.version.outputs.VERSION_NAME }}
+            
+            This is the first release of the Universal Media Library for Android.
+            
+            ### Features
+            - Basic library management interface
+            - Calibre library import capability
+            - Modern Material You UI design
+            - Room database for local data storage
+            
+            ### Installation
+            Download the APK and install on your Android device (requires Android 7.0+ / API 24+).
+            
+            ### First Run
+            The app starts in a clean state with no libraries. You can:
+            1. Create a new library
+            2. Import an existing Calibre library
+            
+            **Note:** This is an early development release. More features are coming soon!
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
