@@ -32,6 +32,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-34
+            build-tools;34.0.0
 
       # The gradlew file is at the root level, so we run Gradle commands from there
       - name: Make Gradle wrapper executable
@@ -96,4 +101,4 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -no-boot-anim -no-audio
           disable-animations: true
           # Run instrumented tests from the root directory
-          script: ./gradlew connectedDebugAndroidTest --stacktrace
+          script: ./gradlew :CleverFerret:connectedDebugAndroidTest --stacktrace
