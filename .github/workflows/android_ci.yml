@@ -38,7 +38,7 @@ jobs:
             platforms;android-34
             build-tools;34.0.0
 
-      # The gradlew file is at the root level, so we don't need to cd into CleverFerret
+      # The gradlew file is at the root level, so we run Gradle commands from there
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
@@ -60,7 +60,7 @@ jobs:
       - name: Upload coverage report to Codecov
         uses: codecov/codecov-action@v3
         with:
-          # The path is now relative to the root directory.
+          # Updated path since we're running from root directory now
           files: ./CleverFerret/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
           fail_ci_if_error: false # Optional: prevents CI failure if Codecov upload fails
 
@@ -100,5 +100,5 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -no-boot-anim -no-audio
           disable-animations: true
-          # This script command runs your instrumented tests.
+          # Run instrumented tests from the root directory
           script: ./gradlew :CleverFerret:connectedDebugAndroidTest --stacktrace
