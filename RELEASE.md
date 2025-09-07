@@ -9,7 +9,7 @@ Since this is the first release of Universal Media Library, follow these steps t
 1. Go to the [Releases page](https://github.com/Kaleaon/Android-calibre/releases)
 2. Click "Create a new release"
 3. Set tag version to `v1.0.0`
-4. Target the current branch (`copilot/fix-0e3e87f2-c993-43da-a94b-ac63c90002ed`) or main
+4. Target the main branch or current development branch
 5. Set release title to: `Universal Media Library v1.0.0`
 6. Use this description:
 
