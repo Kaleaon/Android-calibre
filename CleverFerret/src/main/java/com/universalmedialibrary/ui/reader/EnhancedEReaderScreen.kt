@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import java.util.*
+import com.universalmedialibrary.data.settings.ReaderSettings
 
 /**
  * Enhanced E-reader screen with advanced features including TTS

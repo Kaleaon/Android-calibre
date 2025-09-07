@@ -46,6 +46,7 @@ import androidx.compose.material.icons.filled.Settings
 import com.universalmedialibrary.ui.settings.SettingsScreen
 import com.universalmedialibrary.ui.settings.ApiSettingsScreen
 import com.universalmedialibrary.ui.settings.ReaderSettingsScreen
+import com.universalmedialibrary.ui.metadata.MetadataEditorScreen
 import kotlin.math.absoluteValue
 import android.content.Intent
 import android.net.Uri
