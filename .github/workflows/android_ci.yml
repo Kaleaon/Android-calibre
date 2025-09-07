@@ -33,36 +33,29 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      # All subsequent 'run' commands will execute from the 'CleverFerret' directory.
-      # This avoids having to 'cd' into it in every step.
-      # If your gradlew file is at the root, you can safely remove this 'defaults' block.
+      # The gradlew file is at the root level, so we don't need to cd into CleverFerret
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
-        working-directory: ./CleverFerret
 
       - name: Build project
         # We add --stacktrace to get more detailed error logs if the build fails.
         run: ./gradlew build --stacktrace
-        working-directory: ./CleverFerret
 
       - name: Run lint checks
         run: ./gradlew lint --stacktrace
-        working-directory: ./CleverFerret
         # 'continue-on-error' prevents the entire workflow from failing for minor lint issues.
         continue-on-error: true
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --stacktrace
-        working-directory: ./CleverFerret
 
       - name: Generate JaCoCo test coverage report
         run: ./gradlew jacocoTestReport --stacktrace
-        working-directory: ./CleverFerret
 
       - name: Upload coverage report to Codecov
         uses: codecov/codecov-action@v3
         with:
-          # The path is now relative to the working directory.
+          # The path is now relative to the root directory.
           files: ./CleverFerret/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
           fail_ci_if_error: false # Optional: prevents CI failure if Codecov upload fails
 
@@ -103,4 +96,4 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -no-boot-anim -no-audio
           disable-animations: true
           # This script command runs your instrumented tests.
-          script: cd CleverFerret && ./gradlew connectedDebugAndroidTest --stacktrace
+          script: ./gradlew connectedDebugAndroidTest --stacktrace
