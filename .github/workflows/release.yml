@@ -37,7 +37,6 @@ jobs:
       
       - name: Build release APK
         run: ./gradlew assembleRelease
-        working-directory: ./CleverFerret
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -51,7 +50,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            CleverFerret/build/outputs/apk/release/CleverFerret-release.apk
+            CleverFerret/build/outputs/apk/release/CleverFerret-release-unsigned.apk
           name: Universal Media Library v${{ steps.version.outputs.VERSION_NAME }}
           body: |
             ## Universal Media Library v${{ steps.version.outputs.VERSION_NAME }}

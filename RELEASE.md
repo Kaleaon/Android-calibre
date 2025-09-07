@@ -52,17 +52,17 @@ This is an early development release. Please report issues on the [Issues page](
 ```
 
 7. Check "Set as a pre-release" (since this is early development)
-8. Upload the APK: `app/build/outputs/apk/release/app-release-unsigned.apk`
+8. Upload the APK: `CleverFerret/build/outputs/apk/release/CleverFerret-release-unsigned.apk`
 
 ### 2. APK Location
 
 The release APK is located at:
 ```
-app/build/outputs/apk/release/app-release-unsigned.apk
+CleverFerret/build/outputs/apk/release/CleverFerret-release-unsigned.apk
 ```
 
-File size: ~13 MB
-SHA256: (calculate with `sha256sum app-release-unsigned.apk`)
+File size: ~13-16 MB
+SHA256: (calculate with `sha256sum CleverFerret-release-unsigned.apk`)
 
 ### 3. Verification
 
