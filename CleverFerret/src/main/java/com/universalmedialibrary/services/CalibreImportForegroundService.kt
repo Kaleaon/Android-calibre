@@ -1,14 +1,17 @@
 package com.universalmedialibrary.services
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.universalmedialibrary.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +60,7 @@ class CalibreImportForegroundService : Service() {
             .build()
     }
 
+    @SuppressLint("NotificationPermission")
     private fun updateNotification(title: String, contentText: String) {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
@@ -64,7 +68,16 @@ class CalibreImportForegroundService : Service() {
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .build()
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        
+        // Check for POST_NOTIFICATIONS permission for Android 13 and higher
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) 
+                == PackageManager.PERMISSION_GRANTED) {
+                notificationManager.notify(NOTIFICATION_ID, notification)
+            }
+        } else {
+            notificationManager.notify(NOTIFICATION_ID, notification)
+        }
     }
 
     private fun createNotificationChannel() {

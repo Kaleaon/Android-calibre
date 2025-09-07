@@ -1,8 +1,9 @@
+---
 name: Android CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: ["**"]
   pull_request:
 
 jobs:
@@ -18,7 +19,8 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # Official Gradle action: handles wrapper, dependency and configuration caching safely
+      # Official Gradle action: handles wrapper, dependency and 
+      # configuration caching safely
       - uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
@@ -29,7 +31,8 @@ jobs:
       - name: Ensure SDK components installed
         run: |
           yes | sdkmanager --licenses >/dev/null
-          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          sdkmanager --install "platform-tools" \
+            "platforms;android-34" "build-tools;34.0.0"
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
@@ -60,7 +63,8 @@ jobs:
 
       - name: Enable KVM for hardware acceleration
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", \
+            OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
@@ -81,7 +85,8 @@ jobs:
           target: google_apis
           arch: x86_64
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio \
+            -no-boot-anim -camera-back none
           disable-animations: false
           script: echo "Generated AVD snapshot for caching."
 
@@ -92,7 +97,8 @@ jobs:
           target: google_apis
           arch: x86_64
           force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect \
+            -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: ./gradlew --no-daemon --stacktrace connectedDebugAndroidTest
 

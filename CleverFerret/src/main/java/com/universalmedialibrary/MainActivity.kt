@@ -46,8 +46,10 @@ import com.universalmedialibrary.ui.metadata.MetadataEditorScreen
 import kotlin.math.absoluteValue
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -109,7 +111,11 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
                     // Create a default library for import
                     putExtra(CalibreImportForegroundService.EXTRA_LIBRARY_ID, 1L)
                 }
-                context.startForegroundService(intent)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
                 dbFileUri = null // Reset for next time
                 
                 // Show completion after a delay (in real app, this would be event-driven)
