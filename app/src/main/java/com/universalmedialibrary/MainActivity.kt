@@ -561,13 +561,12 @@ fun BookDetailsScreen(bookId: Long, navController: NavController) {
 @Composable
 fun MetadataEditorScreenWrapper(bookId: Long, navController: NavController) {
     MetadataEditorScreen(
-        title = "Sample Book Title",
-        author = "Sample Author",
-        onSave = { metadata ->
+        itemId = bookId,
+        onSave = {
             // In a real implementation, this would save to the database
             navController.navigateUp()
         },
-        onBack = {
+        onCancel = {
             navController.navigateUp()
         }
     )
