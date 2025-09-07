@@ -23,6 +23,22 @@ android {
         }
     }
 
+    signingConfigs {
+        val keystoreFile = file("keystore/keystore.jks")
+        val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+        val keyAlias = System.getenv("KEY_ALIAS")
+        val keyPassword = System.getenv("KEY_PASSWORD")
+        
+        if (keystoreFile.exists() && !keystorePassword.isNullOrEmpty()) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias ?: "androiddebugkey"
+                this.keyPassword = keyPassword ?: keystorePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -30,6 +46,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Only set signing config if it exists
+            try {
+                signingConfig = signingConfigs.getByName("release")
+            } catch (e: UnknownDomainObjectException) {
+                // No signing config available - will create unsigned APK
+                println("Warning: No signing configuration available. Creating unsigned APK.")
+            }
         }
     }
     compileOptions {

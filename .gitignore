@@ -5,6 +5,11 @@ build/
 # Local configuration
 local.properties
 
+# Sensitive keystore files (production keystores should not be committed)
+release.keystore
+production.keystore
+*.p12
+
 # IDE files
 .idea/
 *.iml
