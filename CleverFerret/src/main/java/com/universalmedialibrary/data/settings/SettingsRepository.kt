@@ -96,17 +96,19 @@ class SettingsRepository @Inject constructor(
 
     // Convenience methods for updating specific API settings
     suspend fun updateBookApiSettings(bookApis: BookApiSettings) {
-        val current = apiSettings.map { it }.let { flow ->
-            // Get current value - this is a simplified approach
-            // In production, you might want to use a different pattern
-            try {
-                context.dataStore.data.map { it[API_SETTINGS_KEY] }.let { jsonFlow ->
-                    val jsonString = context.dataStore.data.map { it[API_SETTINGS_KEY] }.toString()
-                    json.decodeFromString<ApiSettings>(jsonString).copy(bookApis = bookApis)
+        context.dataStore.edit { preferences ->
+            val jsonString = preferences[API_SETTINGS_KEY]
+            val currentSettings = if (!jsonString.isNullOrEmpty()) {
+                try {
+                    json.decodeFromString<ApiSettings>(jsonString)
+                } catch (e: Exception) {
+                    ApiSettings()
                 }
-            } catch (e: Exception) {
-                ApiSettings(bookApis = bookApis)
+            } else {
+                ApiSettings()
             }
+            val updatedSettings = currentSettings.copy(bookApis = bookApis)
+            preferences[API_SETTINGS_KEY] = json.encodeToString(ApiSettings.serializer(), updatedSettings)
         }
     }
 
