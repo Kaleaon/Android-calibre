@@ -42,7 +42,10 @@ import com.universalmedialibrary.services.CalibreImportForegroundService
 import com.universalmedialibrary.ui.bookshelf.EnhancedBookshelfScreen
 import com.universalmedialibrary.ui.details.LibraryDetailsViewModel
 import com.universalmedialibrary.ui.main.MainViewModel
-import com.universalmedialibrary.ui.metadata.MetadataEditorScreen
+import androidx.compose.material.icons.filled.Settings
+import com.universalmedialibrary.ui.settings.SettingsScreen
+import com.universalmedialibrary.ui.settings.ApiSettingsScreen
+import com.universalmedialibrary.ui.settings.ReaderSettingsScreen
 import kotlin.math.absoluteValue
 import android.content.Intent
 import android.net.Uri
@@ -80,6 +83,17 @@ fun AppNavigation() {
         composable("metadata_editor/{bookId}") { backStackEntry ->
             val bookId = backStackEntry.arguments?.getString("bookId")?.toLong() ?: 0L
             MetadataEditorScreenWrapper(bookId = bookId, navController = navController)
+        }
+        composable("settings") {
+            SettingsScreen(navController = navController)
+        }
+        composable("settings/apis/{mediaType}") { backStackEntry ->
+            val mediaType = backStackEntry.arguments?.getString("mediaType") ?: "books"
+            ApiSettingsScreen(navController = navController, mediaType = mediaType)
+        }
+        composable("settings/reader/{settingsType}") { backStackEntry ->
+            val settingsType = backStackEntry.arguments?.getString("settingsType") ?: "visual"
+            ReaderSettingsScreen(navController = navController, settingsType = settingsType)
         }
     }
 }
@@ -141,6 +155,9 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
             TopAppBar(
                 title = { Text("Libraries") },
                 actions = {
+                    IconButton(onClick = { navController.navigate("settings") }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
                     IconButton(onClick = { showMenu = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = "More Options")
                     }

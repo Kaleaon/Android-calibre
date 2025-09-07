@@ -4,6 +4,7 @@ plugins {
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
     id("jacoco")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.24"
 }
 
 android {
@@ -95,6 +96,9 @@ dependencies {
     // HTML rendering and text processing
     implementation("androidx.compose.ui:ui-text-google-fonts")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+    
+    // Kotlinx serialization for settings
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     
     // Audio processing for enhanced TTS (placeholder for future Coqui integration)
     implementation("androidx.media:media:1.7.0")

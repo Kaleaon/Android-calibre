@@ -359,43 +359,21 @@ private fun EnhancedReaderContent(
             .background(backgroundColor)
             .verticalScroll(rememberScrollState())
             .padding(
-                horizontal = settings.horizontalMargin.dp,
-                vertical = settings.verticalMargin.dp
+                horizontal = settings.margins.dp,
+                vertical = settings.margins.dp
             )
     ) {
         Text(
             text = content,
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = settings.fontSize.sp,
-                lineHeight = (settings.fontSize * settings.lineHeightMultiplier).sp,
-                fontFamily = when (settings.fontFamily) {
-                    "serif" -> FontFamily.Serif
-                    "sans-serif" -> FontFamily.SansSerif
-                    "monospace" -> FontFamily.Monospace
-                    else -> FontFamily.Default
-                },
+                lineHeight = (settings.fontSize * settings.lineSpacing).sp,
+                fontFamily = if (settings.dyslexiaFont) FontFamily.Monospace else FontFamily.Default,
                 color = textColor,
-                textAlign = if (settings.isJustified) TextAlign.Justify else TextAlign.Start
+                textAlign = if (settings.isJustified) TextAlign.Justify else TextAlign.Start,
+                fontWeight = if (settings.isBold) FontWeight.Bold else FontWeight.Normal
             ),
             modifier = Modifier.fillMaxWidth()
         )
     }
 }
-
-// Data classes for reader state
-data class ReaderSettings(
-    val fontSize: Float = 16f,
-    val lineHeightMultiplier: Float = 1.5f,
-    val horizontalMargin: Int = 16,
-    val verticalMargin: Int = 16,
-    val isDarkMode: Boolean = false,
-    val isJustified: Boolean = false,
-    val fontFamily: String = "default"
-)
-
-data class TTSState(
-    val isPlaying: Boolean = false,
-    val isPaused: Boolean = false,
-    val speed: Float = 1.0f,
-    val isInitialized: Boolean = false
-)
