@@ -22,7 +22,7 @@ import com.universalmedialibrary.data.local.model.*
         ItemPersonRole::class,
         Series::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false // For now, we can disable schema exporting
 )
 abstract class AppDatabase : RoomDatabase() {

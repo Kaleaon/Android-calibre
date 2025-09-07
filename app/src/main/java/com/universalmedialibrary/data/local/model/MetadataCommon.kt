@@ -24,5 +24,7 @@ data class MetadataCommon(
     val releaseDate: Long?,
     val rating: Float?,
     val summary: String?,
-    val coverImagePath: String?
+    val coverImagePath: String?,
+    val isFavorite: Boolean = false,
+    val isDownloaded: Boolean = true // Tracks if the file is actually downloaded vs metadata-only
 )
