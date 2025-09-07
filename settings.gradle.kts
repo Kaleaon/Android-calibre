@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "UniversalMediaLibrary"
-include(":app")
+include(":CleverFerret")

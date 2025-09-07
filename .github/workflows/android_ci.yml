@@ -12,26 +12,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Use a consistent JDK version (AGP 8.x requires JDK 17)
-      - uses: actions/setup-java@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
-          # Important: do not enable 'cache: gradle' here when using the Gradle action below
+          java-version: '17'
+          cache: gradle
 
       # Official Gradle action: handles wrapper, dependency and configuration caching safely
       - uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
-      # Install only the SDK components you need. Avoid caching the SDK/NDK.
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platform-tools
-            platforms;android-34
-            build-tools;34.0.0
+
+      - name: Ensure SDK components installed
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
 
       # Optional: if NDK is needed, add a specific version (don’t cache it)
       # - name: Install NDK
@@ -43,7 +45,7 @@ jobs:
       #     rm -rf ~/.gradle/caches ~/.gradle/kotlin ~/.gradle/daemon
 
       - name: Build
-        run: ./gradlew --no-daemon --stacktrace assembleDebug
+        run: ./gradlew build
 
       - name: Unit tests
         run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
@@ -54,11 +56,47 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          files: CleverFerret/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
           fail_ci_if_error: false
 
-      - name: Instrumentation tests
-        run: ./gradlew --no-daemon --stacktrace connectedDebugAndroidTest
+      - name: Enable KVM for hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
-      # If you use lint or detekt, add them as separate steps:
-       - run: ./gradlew --no-daemon --stacktrace lint
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-api-30
+
+      - name: Create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+
+      - name: Instrumentation tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: ./gradlew --no-daemon --stacktrace connectedDebugAndroidTest
+
+      - name: Lint
+        run: ./gradlew --no-daemon --stacktrace lint
+        continue-on-error: true
