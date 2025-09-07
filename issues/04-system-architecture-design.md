@@ -1,6 +1,6 @@
 # Issue: System Architecture Design
 
-**Status:** In Progress
+**Status:** Completed
 
 ## User Story
 As a developer, I need a clear and up-to-date system architecture, so that the development process is efficient, and the final application is robust, scalable, and maintainable.
@@ -11,7 +11,7 @@ As a developer, I need a clear and up-to-date system architecture, so that the d
 - **Criteria:**
     - [x] The high-level architecture has been defined as a fully self-contained, on-device application.
     - [x] The core components (Database Layer, Reader, Audio, Video, UI/UX) have been identified.
-    - [ ] The `README.md` and `RESOURCES.md` files are updated to reflect the final architectural decisions.
+    - [x] The `README.md` and `RESOURCES.md` files are updated to reflect the final architectural decisions.
 
 ## Details
 The project has finalized its direction towards a **fully self-contained, on-device application**, which does not require a separate computer or server.
@@ -32,5 +32,5 @@ This task involves ensuring that all project documentation, primarily `README.md
 
 ## Labels
 - `phase-2-architecture`
-- `status-in-progress`
+- `status-completed`
 - `documentation`

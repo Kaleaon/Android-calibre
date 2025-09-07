@@ -77,6 +77,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
+    // Audio/Video player
+    implementation("androidx.media3:media3-exoplayer:1.3.0")
+    implementation("androidx.media3:media3-ui:1.3.0")
+    implementation("androidx.media3:media3-session:1.3.0")
 
     // Hilt for Dependency Injection
     implementation("com.google.dagger:hilt-android:2.51.1")

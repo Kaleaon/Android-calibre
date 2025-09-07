@@ -1,6 +1,6 @@
 # Issue: Implement Core Data Layer and Calibre Importer
 
-**Status:** Not Started
+**Status:** Completed
 
 ## User Story
 As a developer, I need to build the core database and the Calibre import functionality so that the application can store and manage user data effectively, starting with a seamless import experience for Calibre users.
@@ -9,12 +9,12 @@ As a developer, I need to build the core database and the Calibre import functio
 - **Benefit for the user:** This is a foundational feature that enables the entire application to function. For the user, the most immediate benefit is the ability to import their existing Calibre library, getting them up and running in the new app quickly and easily.
 - **Ease of use:** The implementation should be robust and performant, ensuring the app feels fast and reliable when managing data.
 - **Criteria:**
-    - [ ] The database schema from `DATABASE_SCHEMA.md` is implemented in Kotlin using Android's native SQLite libraries.
-    - [ ] All database tables (Libraries, MediaItems, Metadata, etc.) are created.
-    - [ ] The Calibre importer is built, following the logic from `IMPORT_LOGIC.md`.
-    - [ ] The importer correctly connects to a `metadata.db` file, reads the data, and applies the defined cleaning rules.
-    - [ ] Cleaned data is correctly inserted into the new application's database.
-    - [ ] Unit tests are created to verify the data transformation and insertion logic.
+    - [x] The database schema from `DATABASE_SCHEMA.md` is implemented in Kotlin using Android's native SQLite libraries.
+    - [x] All database tables (Libraries, MediaItems, Metadata, etc.) are created.
+    - [x] The Calibre importer is built, following the logic from `IMPORT_LOGIC.md`.
+    - [x] The importer correctly connects to a `metadata.db` file, reads the data, and applies the defined cleaning rules.
+    - [x] Cleaned data is correctly inserted into the new application's database.
+    - [x] Unit tests are created to verify the data transformation and insertion logic.
 
 ## Details
 This task involves the implementation of the designs created in Phase 2.
@@ -33,6 +33,6 @@ This task involves the implementation of the designs created in Phase 2.
 
 ## Labels
 - `phase-3-implementation`
-- `status-not-started`
+- `status-completed`
 - `database`
 - `feature-import`
