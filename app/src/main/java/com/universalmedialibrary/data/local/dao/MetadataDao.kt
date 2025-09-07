@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.universalmedialibrary.data.local.model.*
 
 @Dao
@@ -11,6 +12,9 @@ interface MetadataDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMetadataCommon(metadataCommon: MetadataCommon)
+
+    @Update
+    suspend fun updateMetadata(metadataCommon: MetadataCommon)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMetadataBook(metadataBook: MetadataBook)
