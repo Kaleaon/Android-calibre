@@ -42,9 +42,9 @@ jobs:
       #   run: sdkmanager "ndk;26.1.10909125"
 
       # One-time cache reset (uncomment only if you suspect corruption)
-      # - name: Reset Gradle caches for this run
-      #   run: |
-      #     rm -rf ~/.gradle/caches ~/.gradle/kotlin ~/.gradle/daemon
+      - name: Reset Gradle caches for this run
+       run: |
+        rm -rf ~/.gradle/caches ~/.gradle/kotlin ~/.gradle/daemon
 
       - name: Build
         run: ./gradlew --no-daemon --stacktrace build
