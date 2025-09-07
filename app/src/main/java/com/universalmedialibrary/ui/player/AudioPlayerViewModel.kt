@@ -26,6 +26,10 @@ class AudioPlayerViewModel @Inject constructor() : ViewModel() {
 
     private var exoPlayer: ExoPlayer? = null
     private var updatePositionJob: kotlinx.coroutines.Job? = null
+    
+    // Configurable position update interval (in milliseconds)
+    // Default to 250ms for smooth progress tracking, but can be customized
+    private var positionUpdateIntervalMs: Long = 250L
 
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -144,6 +148,14 @@ class AudioPlayerViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
+     * Configure the position update interval
+     * @param intervalMs Update interval in milliseconds (recommended: 100-250ms for smooth tracking)
+     */
+    fun setPositionUpdateInterval(intervalMs: Long) {
+        positionUpdateIntervalMs = intervalMs.coerceIn(50L, 2000L) // Limit between 50ms and 2s
+    }
+
+    /**
      * Start updating playback position
      */
     private fun startPositionUpdates() {
@@ -153,7 +165,7 @@ class AudioPlayerViewModel @Inject constructor() : ViewModel() {
                 _uiState.value = _uiState.value.copy(
                     currentPosition = exoPlayer?.currentPosition ?: 0L
                 )
-                kotlinx.coroutines.delay(1000) // Update every second
+                kotlinx.coroutines.delay(positionUpdateIntervalMs)
             }
         }
     }

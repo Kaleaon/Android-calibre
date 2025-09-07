@@ -13,7 +13,14 @@ import java.io.File
 
 /**
  * ViewModel for the e-reader screen
- * Basic implementation without epub4j for now
+ * Currently supports: TXT, MD files with basic text display
+ * ePub support: Limited (displays basic message, full implementation pending)
+ * 
+ * TODO: Integrate epub4j or similar library for full ePub support with:
+ * - Chapter navigation
+ * - Proper formatting and styling  
+ * - Image support
+ * - Table of contents
  */
 @HiltViewModel
 class EReaderViewModel @Inject constructor() : ViewModel() {
@@ -43,10 +50,32 @@ class EReaderViewModel @Inject constructor() : ViewModel() {
                         file.readText()
                     }
                     "epub" -> {
-                        "ePub reader not yet implemented. This is a placeholder for: ${file.name}"
+                        // Basic ePub handling - shows file info and guidance
+                        """
+                        ePub Reader - Limited Support
+                        
+                        File: ${file.name}
+                        Size: ${file.length() / 1024} KB
+                        
+                        Current status: Basic ePub support is implemented but limited.
+                        
+                        Available features:
+                        • File detection and basic info display
+                        • Placeholder reading interface
+                        
+                        Planned features:
+                        • Full ePub parsing and rendering
+                        • Chapter navigation
+                        • Proper text formatting
+                        • Image and media support
+                        • Bookmarks and reading progress
+                        
+                        To fully read this ePub file, use a dedicated ePub reader app or 
+                        wait for the complete ePub implementation in a future update.
+                        """.trimIndent()
                     }
                     else -> {
-                        "Unsupported file format: ${file.extension}"
+                        "Unsupported file format: ${file.extension}\n\nSupported formats:\n• TXT (Plain text)\n• MD (Markdown)\n• ePub (Limited support)"
                     }
                 }
                 

@@ -4,6 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.universalmedialibrary.data.local.dao.MediaItemDao
 import com.universalmedialibrary.data.local.dao.MetadataDao
+import com.universalmedialibrary.data.local.model.Genre
+import com.universalmedialibrary.data.local.model.ItemGenre
+import com.universalmedialibrary.data.local.model.ItemPersonRole
+import com.universalmedialibrary.data.local.model.People
+import com.universalmedialibrary.data.local.model.Series
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,19 +45,24 @@ class MetadataEditorViewModel @Inject constructor(
                 val metadataBook = metadataDao.getMetadataBookByItemId(itemId)
                 
                 if (mediaItem != null && metadataCommon != null) {
+                    // Load relationship data
+                    val authors = metadataDao.getAuthorsByItemId(itemId)
+                    val series = metadataDao.getSeriesByItemId(itemId) ?: ""
+                    val genres = metadataDao.getGenresByItemId(itemId)
+                    
                     // Convert to editable format
                     val metadata = EditableMetadata(
                         title = metadataCommon.title,
                         subtitle = metadataBook?.subtitle ?: "",
                         sortTitle = metadataCommon.sortTitle ?: "",
                         summary = metadataCommon.summary ?: "",
-                        authors = emptyList(), // TODO: Load from People table
-                        series = "", // TODO: Load from Series table
-                        seriesIndex = null, // TODO: Load from Series table
+                        authors = authors,
+                        series = series,
+                        seriesIndex = null, // Not supported in current schema
                         rating = metadataCommon.rating?.toInt(),
                         publisher = metadataBook?.publisher ?: "",
                         isbn = metadataBook?.isbn ?: "",
-                        genres = emptyList(), // TODO: Load from Genre table
+                        genres = genres,
                         releaseDate = metadataCommon.releaseDate?.toString() ?: ""
                     )
                     
@@ -114,9 +124,57 @@ class MetadataEditorViewModel @Inject constructor(
         
         viewModelScope.launch {
             try {
-                // Persist metadata changes to the database
-                // This involves updating the metadata table for the current item
-                metadataDao.updateMetadataForItem(itemId, metadata)
+                // Update metadata_common table
+                metadataDao.updateMetadataCommon(
+                    itemId = itemId,
+                    title = metadata.title,
+                    sortTitle = metadata.sortTitle.ifBlank { null },
+                    summary = metadata.summary.ifBlank { null },
+                    rating = metadata.rating?.toFloat()
+                )
+                
+                // Update metadata_book table if it exists
+                metadataDao.updateMetadataBook(
+                    itemId = itemId,
+                    subtitle = metadata.subtitle.ifBlank { null },
+                    publisher = metadata.publisher.ifBlank { null },
+                    isbn = metadata.isbn.ifBlank { null }
+                )
+                
+                // Update authors
+                metadataDao.deleteAuthorsByItemId(itemId)
+                for (authorName in metadata.authors) {
+                    var personId = metadataDao.findPersonByName(authorName)
+                    if (personId == null) {
+                        personId = metadataDao.insertPerson(
+                            People(name = authorName, sortName = null)
+                        )
+                    }
+                    metadataDao.insertItemPersonRole(
+                        ItemPersonRole(itemId = itemId, personId = personId, role = "AUTHOR")
+                    )
+                }
+                
+                // Update series
+                if (metadata.series.isNotBlank()) {
+                    var seriesId = metadataDao.findSeriesByName(metadata.series)
+                    if (seriesId == null) {
+                        seriesId = metadataDao.insertSeries(Series(name = metadata.series))
+                    }
+                    metadataDao.updateBookWithSeries(itemId, seriesId)
+                }
+                
+                // Update genres
+                metadataDao.deleteGenresByItemId(itemId)
+                for (genreName in metadata.genres) {
+                    var genreId = metadataDao.findGenreByName(genreName)
+                    if (genreId == null) {
+                        genreId = metadataDao.insertGenre(Genre(name = genreName))
+                    }
+                    metadataDao.insertItemGenre(
+                        ItemGenre(itemId = itemId, genreId = genreId)
+                    )
+                }
                 
                 _uiState.value = _uiState.value.copy(
                     originalMetadata = metadata,
