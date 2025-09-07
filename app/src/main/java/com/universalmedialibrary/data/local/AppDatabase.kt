@@ -2,6 +2,8 @@ package com.universalmedialibrary.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.universalmedialibrary.data.local.dao.LibraryDao
 import com.universalmedialibrary.data.local.dao.MediaItemDao
 import com.universalmedialibrary.data.local.dao.MetadataDao
@@ -33,5 +35,13 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "universal-media-library.db"
+        
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add new columns to metadata_common table
+                database.execSQL("ALTER TABLE metadata_common ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE metadata_common ADD COLUMN isDownloaded INTEGER NOT NULL DEFAULT 1")
+            }
+        }
     }
 }
