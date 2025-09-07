@@ -18,6 +18,14 @@ import androidx.room.PrimaryKey
 data class MetadataMovie(
     @PrimaryKey
     val itemId: Long,
-    val tagline: String?,
-    val runtime: Int? // in minutes
+    val tagline: String? = null,
+    val runtime: Int? = null, // in minutes
+    val director: String? = null,
+    val rating: String? = null,
+    val releaseYear: Int? = null,
+    val productionCompany: String? = null,
+    val budget: Long? = null,
+    val boxOffice: Long? = null,
+    val imdbId: String? = null,
+    val tmdbId: String? = null
 )

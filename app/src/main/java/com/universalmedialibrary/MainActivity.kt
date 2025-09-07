@@ -39,6 +39,7 @@ import androidx.navigation.compose.rememberNavController
 import com.universalmedialibrary.data.local.model.BookDetails
 import com.universalmedialibrary.data.local.model.Library
 import com.universalmedialibrary.services.CalibreImportForegroundService
+import com.universalmedialibrary.ui.bookshelf.EnhancedBookshelfScreen
 import com.universalmedialibrary.ui.details.LibraryDetailsViewModel
 import com.universalmedialibrary.ui.main.MainViewModel
 import com.universalmedialibrary.ui.metadata.MetadataEditorScreen
@@ -68,8 +69,9 @@ fun AppNavigation() {
         composable("library_list") {
             LibraryListScreen(navController = navController)
         }
-        composable("library_details/{libraryId}") {
-            LibraryDetailsScreen()
+        composable("library_details/{libraryId}") { backStackEntry ->
+            val libraryId = backStackEntry.arguments?.getString("libraryId")?.toLong() ?: 1L
+            EnhancedBookshelfScreen(navController = navController, libraryId = libraryId)
         }
         composable("book_details/{bookId}") { backStackEntry ->
             val bookId = backStackEntry.arguments?.getString("bookId")?.toLong() ?: 0L

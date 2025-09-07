@@ -5,7 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "metadata_common",
+    tableName = "metadata_tv_show",
     foreignKeys = [
         ForeignKey(
             entity = MediaItem::class,
@@ -15,16 +15,16 @@ import androidx.room.PrimaryKey
         )
     ]
 )
-data class MetadataCommon(
+data class MetadataTvShow(
     @PrimaryKey
     val itemId: Long,
-    val title: String,
-    val sortTitle: String?,
-    val year: Int?,
-    val releaseDate: Long?,
-    val rating: Float?,
-    val summary: String?,
-    val coverImagePath: String?,
-    val isFavorite: Boolean = false,
-    val isDownloaded: Boolean = true // Tracks if the file is actually downloaded vs metadata-only
+    val seasonNumber: Int? = null,
+    val episodeNumber: Int? = null,
+    val seriesName: String? = null,
+    val network: String? = null,
+    val airDate: String? = null,
+    val episodeRuntime: Int? = null,
+    val tvRating: String? = null,
+    val tvdbId: String? = null,
+    val imdbId: String? = null
 )

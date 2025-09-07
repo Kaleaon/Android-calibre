@@ -39,6 +39,8 @@ interface MediaItemDao {
             mc.rating as meta_rating,
             mc.summary as meta_summary,
             mc.coverImagePath as meta_coverImagePath,
+            mc.isFavorite as meta_isFavorite,
+            mc.isDownloaded as meta_isDownloaded,
             p.name as authorName
         FROM media_items mi
         JOIN metadata_common mc ON mi.itemId = mc.itemId
