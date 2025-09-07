@@ -103,5 +103,4 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -no-boot-anim -no-audio
           disable-animations: true
           # This script command runs your instrumented tests.
-          script: ./gradlew connectedDebugAndroidTest --stacktrace
-        working-directory: ./CleverFerret
+          script: cd CleverFerret && ./gradlew connectedDebugAndroidTest --stacktrace
