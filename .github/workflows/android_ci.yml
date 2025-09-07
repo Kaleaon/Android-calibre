@@ -1,74 +1,79 @@
----
+# A revised and optimized GitHub Actions workflow for building and testing an Android app.
 name: Android CI
 
+# This section defines the triggers for the workflow.
+# It's now more specific to prevent redundant runs.
 on:
+  # Run on pushes to the main and develop branches
   push:
-    branches: ["**"]
+    branches: [ "main", "develop" ]
+  # Run on pull requests that target the main branch
   pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
+  build-and-test:
+    name: Build & Test Android App
+    runs-on: ubuntu-latest # Use 'latest' for the most up-to-date runner environment
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository code
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: 'temurin'
           java-version: '17'
 
-      # Official Gradle action: handles wrapper, dependency and 
-      # configuration caching safely
-      - uses: gradle/actions/setup-gradle@v3
-        with:
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
+      # This official Gradle action safely handles caching for dependencies, wrappers, and build configurations.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Ensure SDK components installed
-        run: |
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager --install "platform-tools" \
-            "platforms;android-34" "build-tools;34.0.0"
-
-      - name: Make Gradle executable
+      # All subsequent 'run' commands will execute from the 'CleverFerret' directory.
+      # This avoids having to 'cd' into it in every step.
+      # If your gradlew file is at the root, you can safely remove this 'defaults' block.
+      - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
+        working-directory: ./CleverFerret
 
-      # Optional: if NDK is needed, add a specific version (don’t cache it)
-      # - name: Install NDK
-      #   run: sdkmanager "ndk;26.1.10909125"
+      - name: Build project
+        # We add --stacktrace to get more detailed error logs if the build fails.
+        run: ./gradlew build --stacktrace
+        working-directory: ./CleverFerret
 
-      # One-time cache reset (uncomment only if you suspect corruption)
-      - name: Reset Gradle caches for this run
-       run: |
-        rm -rf ~/.gradle/caches ~/.gradle/kotlin ~/.gradle/daemon
+      - name: Run lint checks
+        run: ./gradlew lint --stacktrace
+        working-directory: ./CleverFerret
+        # 'continue-on-error' prevents the entire workflow from failing for minor lint issues.
+        continue-on-error: true
 
-      - name: Build
-        run: ./gradlew --no-daemon --stacktrace build
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+        working-directory: ./CleverFerret
 
-      - name: Unit tests
-        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
+      - name: Generate JaCoCo test coverage report
+        run: ./gradlew jacocoTestReport --stacktrace
+        working-directory: ./CleverFerret
 
-      - name: Generate test coverage report
-        run: ./gradlew --no-daemon --stacktrace jacocoTestReport
-
-      - name: Upload coverage reports to Codecov
+      - name: Upload coverage report to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: CleverFerret/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
-          fail_ci_if_error: false
+          # The path is now relative to the working directory.
+          files: ./CleverFerret/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          fail_ci_if_error: false # Optional: prevents CI failure if Codecov upload fails
 
+      # The following steps set up and run instrumentation tests on a virtual device.
       - name: Enable KVM for hardware acceleration
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", \
-            OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: AVD cache
+      - name: AVD (Android Virtual Device) cache
         uses: actions/cache@v4
         id: avd-cache
         with:
@@ -78,30 +83,25 @@ jobs:
           key: avd-api-30
 
       - name: Create AVD and generate snapshot for caching
+        # This step runs ONLY if the AVD cache from the previous step was not found.
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
-          target: google_apis
           arch: x86_64
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio \
-            -no-boot-anim -camera-back none
+          emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -no-audio
           disable-animations: false
-          script: echo "Generated AVD snapshot for caching."
+          script: echo "AVD snapshot created."
 
-      - name: Instrumentation tests
+      - name: Run instrumentation tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
-          target: google_apis
           arch: x86_64
           force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect \
-            -noaudio -no-boot-anim -camera-back none
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -no-boot-anim -no-audio
           disable-animations: true
-          script: ./gradlew --no-daemon --stacktrace connectedDebugAndroidTest
-
-      - name: Lint
-        run: ./gradlew --no-daemon --stacktrace lint
-        continue-on-error: true
+          # This script command runs your instrumented tests.
+          script: ./gradlew connectedDebugAndroidTest --stacktrace
+        working-directory: ./CleverFerret
