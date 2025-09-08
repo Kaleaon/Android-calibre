@@ -1,0 +1,4 @@
+   PID STATUS   INFO
+  2324 IDLE     8.8
+
+Only Daemons for the current Gradle version are displayed. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:status in the Gradle documentation.
