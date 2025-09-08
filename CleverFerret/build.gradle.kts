@@ -40,6 +40,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Intentionally empty - uses AGP defaults including the default debug keystore
+            // This provides automatic debug signing without requiring explicit configuration
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
