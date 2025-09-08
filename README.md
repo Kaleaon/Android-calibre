@@ -14,11 +14,55 @@ CleverFerret is a fully self-contained, native Android application for managing 
 
 ## 2. Core Principles
 
-*   **On-Device First:** The entire library and its database will be managed on the user's device. No external server or desktop application will be required.
-*   **Extensible by Design:** The database schema and application architecture will be designed from the ground up to support a wide variety of media types.
-*   **User-Centric Metadata:** The user will have full control over their metadata, with powerful tools for manual editing and automatic fetching from multiple online sources.
-*   **Modern Native UI:** The application will be built with the latest Android technologies (Kotlin, Jetpack Compose, Material You).
-*   **Open Source:** The project will be developed as a Free and Open Source Software (FOSS) project.
+*   **On-Device First:** The entire library and its database are managed on the user's device. No external server or desktop application is required.
+*   **Extensible by Design:** The database schema and application architecture are designed from the ground up to support a wide variety of media types.
+*   **User-Centric Metadata:** The user has full control over their metadata, with powerful tools for manual editing and automatic fetching from multiple online sources.
+*   **Modern Native UI:** The application is built with the latest Android technologies (Kotlin, Jetpack Compose, Material You).
+*   **Open Source:** The project is developed as a Free and Open Source Software (FOSS) project.
+
+---
+
+## 2.1. Current Status
+
+The project is currently in the early stages of development. The following features are implemented:
+
+*   **Core Database Layer:** A robust database layer built with **Room** to manage libraries, media items, and metadata.
+*   **Calibre Import:** A service to import book libraries from an existing Calibre `metadata.db` file.
+*   **Basic UI:** A simple user interface built with **Jetpack Compose** that allows users to view their libraries and the books within them.
+*   **Dependency Injection:** Using **Hilt** for dependency management.
+
+---
+
+## 2.2. Getting Started (Developers)
+
+### Prerequisites
+
+*   Android Studio (latest version recommended)
+*   Java Development Kit (JDK) 17 or higher
+
+### Building the Project
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Kaleaon/CleverFerret.git
+    ```
+2.  **Open the project in Android Studio.**
+3.  **Build the project:**
+    *   Use the "Build" menu in Android Studio (Build > Make Project).
+    *   Or run the following command in the terminal:
+        ```bash
+        ./gradlew clean assembleDebug
+        ```
+4.  **Run the application on an emulator or a physical device.**
+
+### Project Structure
+
+The project is organized into the following main packages:
+
+*   `com.universalmedialibrary.data`: Contains all data-related classes, including Room entities, DAOs (Data Access Objects), and the database definition.
+*   `com.universalmedialibrary.di`: Contains the Hilt dependency injection modules.
+*   `com.universalmedialibrary.services`: Contains services for background tasks, such as the Calibre import service.
+*   `com.universalmedialibrary.ui`: Contains the Jetpack Compose UI code and ViewModels.
 
 ---
 
@@ -88,12 +132,12 @@ The application will include features to create new content from external source
 *   Data Correction Technology Research (Completed: ML Kit & OpenNLP)
 *   Expanded Metadata Source Research (Completed: New APIs identified)
 
-### Phase 2: Architecture & Core Data Model (IN PROGRESS)
+### Phase 2: Architecture & Core Data Model (COMPLETE)
 1.  **System Architecture Design:** Update `README.md` and `RESOURCES.md` to reflect the new architecture.
 2.  **Advanced Database Schema and Import Logic:** Design the detailed SQLite schema and the logic for the Calibre import and data cleaning.
 3.  **Design Manual Metadata Editing UI:** Create mockups and specifications for the metadata editing screen.
 
-### Phase 3: Implementation
+### Phase 3: Implementation (IN PROGRESS)
 1.  **Implement Core Data Layer:** Build the database and the Calibre importer.
 2.  **Implement "Content-to-Epub" Features:** Build the news and fanfiction downloaders.
 3.  **Integrate Media Viewers & Players:** Integrate `epub4j` and build the audio/video players.
