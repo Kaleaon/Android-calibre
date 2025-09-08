@@ -24,6 +24,13 @@ android {
     }
 
     signingConfigs {
+        // Debug signing - use default Android debug keystore or create one
+        getByName("debug") {
+            // Let Android Gradle Plugin handle debug signing automatically
+            // This will create the debug keystore if it doesn't exist
+        }
+        
+        // Release signing - only when environment variables are available
         val keystoreFile = file("keystore/keystore.jks")
         val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
         val keyAlias = System.getenv("KEY_ALIAS")
@@ -41,8 +48,9 @@ android {
 
     buildTypes {
         debug {
-            // Intentionally empty - uses AGP defaults including the default debug keystore
-            // This provides automatic debug signing without requiring explicit configuration
+            // Use default debug signing config (Android will create debug keystore automatically)
+            signingConfig = signingConfigs.getByName("debug")
+ main
         }
         release {
             isMinifyEnabled = false
@@ -54,8 +62,9 @@ android {
             try {
                 signingConfig = signingConfigs.getByName("release")
             } catch (e: UnknownDomainObjectException) {
-                // No signing config available - will create unsigned APK
-                println("Warning: No signing configuration available. Creating unsigned APK.")
+                // Fall back to debug signing for unsigned releases
+                println("Warning: No release signing configuration available. Using debug signing.")
+                signingConfig = signingConfigs.getByName("debug")
             }
         }
     }

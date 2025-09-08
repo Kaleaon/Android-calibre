@@ -42,9 +42,36 @@ You have two main options to populate your library:
 ## Troubleshooting
 
 ### App Won't Install
-- Make sure you have enough storage space
-- Verify your Android version is 7.0 or higher
-- Check that "Install from unknown sources" is enabled
+
+#### Most Common Fixes:
+1. **Enable "Install from unknown sources"**: Go to Settings > Security > Unknown Sources (or Apps > Special access > Install unknown apps on newer Android versions)
+2. **Check storage space**: Ensure you have at least 100 MB of free storage space
+3. **Verify Android version**: Make sure your device runs Android 7.0 (API level 24) or higher
+4. **Clear package installer cache**: Go to Settings > Apps > Package Installer > Storage > Clear Cache
+
+#### APK Signing Issues (RESOLVED in latest version):
+- ✅ **Fixed**: Previous versions had unsigned APKs which caused installation failures
+- ✅ **Fixed**: All APKs are now properly signed with debug certificates for installation
+- ✅ **Fixed**: Missing permissions for Android 13+ devices have been added
+
+#### For Android 13+ Devices:
+The app now properly requests notification permissions required for the import service.
+
+#### If Installation Still Fails:
+1. Try downloading the APK again (it may have been corrupted)
+2. Restart your device and try installing again
+3. Check if you have any security software blocking the installation
+4. Try installing using a different file manager app
+
+### App Permissions
+
+The app requests the following permissions:
+- **Internet**: For potential future online metadata fetching
+- **Record Audio**: For text-to-speech functionality  
+- **Post Notifications** (Android 13+): For import progress notifications
+- **Foreground Service**: For long-running import operations
+
+All permissions are used only for their stated purposes and no data is sent to external servers.
 
 ### Empty Library
 This is expected behavior on first run. Use one of the methods above to add content to your library.

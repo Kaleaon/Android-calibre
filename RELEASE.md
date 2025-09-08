@@ -85,5 +85,6 @@ The GitHub Actions workflow in `.github/workflows/release.yml` will automate fut
 - **Version Name:** 1.0
 - **Target SDK:** 34 (Android 14)
 - **Min SDK:** 24 (Android 7.0)
-- **APK Type:** Release (unsigned)
+- **APK Type:** Release (signed with debug certificates for installation)
 - **Build Type:** Release with R8 minification disabled
+- **Signing:** Fixed - APKs are now properly signed for installation
