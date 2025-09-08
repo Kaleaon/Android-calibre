@@ -25,32 +25,47 @@ android {
     }
 
     signingConfigs {
-        // Debug signing - use default Android debug keystore or create one
+        // Debug signing - use default Android debug keystore
         getByName("debug") {
-            // Let Android Gradle Plugin handle debug signing automatically
-            // This will create the debug keystore if it doesn't exist
+            // Android Gradle Plugin handles debug signing automatically
+            // Uses ~/.android/debug.keystore with default credentials
         }
         
-        // Release signing - only when environment variables are available
-        val keystoreFile = file("keystore/keystore.jks")
+        // Release signing configuration
+        // Keystore should be stored securely, not in repository
+        // For CI/CD: use GitHub Secrets to provide environment variables
+        // For local development: set environment variables or use gradle.properties
+        val keystoreFile = System.getenv("KEYSTORE_FILE")?.let { file(it) }
+            ?: file("release.keystore") // Local fallback (not in repo)
         val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
-        val keyAlias = System.getenv("KEY_ALIAS")
-        val keyPassword = System.getenv("KEY_PASSWORD")
+        val keyAlias = System.getenv("KEY_ALIAS") ?: "androidreleasekey"
+        val keyPassword = System.getenv("KEY_PASSWORD") ?: keystorePassword
         
-        if (keystoreFile.exists() && !keystorePassword.isNullOrEmpty()) {
+        // Only create release signing config if all required properties are available
+        if (keystoreFile?.exists() == true && !keystorePassword.isNullOrEmpty()) {
             create("release") {
                 storeFile = keystoreFile
                 storePassword = keystorePassword
-                this.keyAlias = keyAlias ?: "androiddebugkey"
-                this.keyPassword = keyPassword ?: keystorePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+                
+                // Validate signing configuration
+                println("✓ Release signing configured with keystore: ${keystoreFile.name}")
+                println("✓ Using key alias: $keyAlias")
             }
+        } else {
+            println("⚠️  Release signing not configured - missing keystore or credentials")
+            println("   For production builds, ensure KEYSTORE_FILE, KEYSTORE_PASSWORD are set")
+            println("   Keystore path: ${keystoreFile?.absolutePath ?: "not specified"}")
+            println("   Password provided: ${if (keystorePassword.isNullOrEmpty()) "no" else "yes"}")
         }
     }
 
     buildTypes {
         debug {
-            // Use default debug signing config (Android will create debug keystore automatically)
+            // Use default debug signing config
             signingConfig = signingConfigs.getByName("debug")
+ main
         }
         release {
             isMinifyEnabled = false
@@ -58,13 +73,20 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Only set signing config if it exists
-            try {
-                signingConfig = signingConfigs.getByName("release")
-            } catch (e: UnknownDomainObjectException) {
-                // Fall back to debug signing for unsigned releases
-                println("Warning: No release signing configuration available. Using debug signing.")
+            
+            // Configure release signing
+            val releaseSigningConfig = signingConfigs.findByName("release")
+            if (releaseSigningConfig != null) {
+                signingConfig = releaseSigningConfig
+                println("✓ Release build will be signed with release keystore")
+            } else {
+                // For development builds without release keystore, use debug signing
+                // This allows local development without requiring production keystore
                 signingConfig = signingConfigs.getByName("debug")
+                applicationIdSuffix = ".unsigned"
+                versionNameSuffix = "-unsigned"
+                println("⚠️  Release build using debug signing (unsigned for production)")
+                println("   This APK should not be distributed to users")
             }
         }
     }

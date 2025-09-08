@@ -1,0 +1,305 @@
+# Enhanced Automated Build Android App with GitHub Actions
+# Implements comprehensive automated build features including:
+# - Advanced caching strategies
+# - Build artifacts management
+# - Multi-API level testing matrix
+# - Performance monitoring
+# - Security scanning
+# - Automated test reporting
+
+name: Enhanced Android CI
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: # Allow manual triggers
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2 -Dkotlin.incremental=false"
+  JAVA_TOOL_OPTIONS: "-Xmx4g -XX:+UseParallelGC"
+
+jobs:
+  # Build Matrix for multiple API levels and build types
+  build-matrix:
+    name: Build & Test (API ${{ matrix.api-level }}, ${{ matrix.build-type }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [24, 30, 34] # Min, popular, target
+        build-type: [debug, release]
+        exclude:
+          # Only test release on target API to save resources
+          - api-level: 24
+            build-type: release
+          - api-level: 30
+            build-type: release
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for better caching
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # Enhanced Gradle setup with better caching
+      - name: Setup Gradle with enhanced caching
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+          gradle-home-cache-cleanup: true
+          # Enable build scan for performance monitoring
+          arguments: --scan
+
+      # Android SDK caching
+      - name: Cache Android SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.ANDROID_HOME }}
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: android-sdk-${{ matrix.api-level }}-${{ hashFiles('**/build.gradle.kts', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            android-sdk-${{ matrix.api-level }}-
+            android-sdk-
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: ${{ matrix.api-level }}
+          packages: |
+            platform-tools
+            platforms;android-${{ matrix.api-level }}
+            build-tools;34.0.0
+            system-images;android-${{ matrix.api-level }};google_apis;x86_64
+
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      # Dependency vulnerability scanning
+      - name: Run dependency vulnerability scan
+        run: ./gradlew dependencyCheckAnalyze --continue || true
+        continue-on-error: true
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      # Build with performance monitoring
+      - name: Build ${{ matrix.build-type }} APK (API ${{ matrix.api-level }})
+        run: |
+          echo "::group::Building ${{ matrix.build-type }} APK for API ${{ matrix.api-level }}"
+          start_time=$(date +%s)
+          ./gradlew assemble${{ matrix.build-type == 'debug' && 'Debug' || 'Release' }} --stacktrace --build-cache
+          end_time=$(date +%s)
+          build_duration=$((end_time - start_time))
+          echo "Build duration: ${build_duration} seconds"
+          echo "build_duration=${build_duration}" >> $GITHUB_OUTPUT
+          echo "::endgroup::"
+        id: build
+
+      # Enhanced testing with retry logic
+      - name: Run unit tests with retry
+        run: |
+          for i in {1..3}; do
+            echo "Test attempt $i"
+            if ./gradlew test${{ matrix.build-type == 'debug' && 'Debug' || 'Release' }}UnitTest --stacktrace; then
+              echo "Tests passed on attempt $i"
+              break
+            elif [ $i -eq 3 ]; then
+              echo "Tests failed after 3 attempts"
+              exit 1
+            else
+              echo "Test attempt $i failed, retrying..."
+              sleep 30
+            fi
+          done
+
+      # Enhanced lint with detailed reporting
+      - name: Run lint analysis
+        run: ./gradlew lint --continue
+        continue-on-error: true
+
+      # Generate comprehensive test coverage
+      - name: Generate test coverage report
+        run: ./gradlew jacocoTestReport --stacktrace
+        if: matrix.build-type == 'debug'
+
+      # Upload build artifacts with detailed naming
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ matrix.build-type }}-api${{ matrix.api-level }}-${{ github.sha }}
+          path: |
+            CleverFerret/build/outputs/apk/**/*.apk
+            CleverFerret/build/outputs/mapping/**/*.txt
+          retention-days: 30
+
+      # Upload test results
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.build-type }}-api${{ matrix.api-level }}-${{ github.sha }}
+          path: |
+            CleverFerret/build/reports/
+            CleverFerret/build/test-results/
+          retention-days: 14
+
+      # Upload lint results
+      - name: Upload lint results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-results-${{ matrix.build-type }}-api${{ matrix.api-level }}-${{ github.sha }}
+          path: CleverFerret/build/reports/lint-results*.xml
+          retention-days: 14
+
+      # Performance monitoring
+      - name: Report build performance
+        run: |
+          echo "## Build Performance Report" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Type**: ${{ matrix.build-type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Level**: ${{ matrix.api-level }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Duration**: ${{ steps.build.outputs.build_duration }} seconds" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  # Security and quality analysis job
+  security-analysis:
+    name: Security & Quality Analysis
+    runs-on: ubuntu-latest
+    needs: build-matrix
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # Run security scans
+      - name: Run OWASP Dependency Check
+        run: ./gradlew dependencyCheckAnalyze
+        continue-on-error: true
+
+      # Upload security scan results
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-results-${{ github.sha }}
+          path: CleverFerret/build/reports/dependency-check-report.html
+          retention-days: 30
+
+      # CodeQL Analysis
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # APK size and performance analysis
+  apk-analysis:
+    name: APK Analysis & Optimization
+    runs-on: ubuntu-latest
+    needs: build-matrix
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download release APK
+        uses: actions/download-artifact@v4
+        with:
+          name: apk-release-api34-${{ github.sha }}
+          path: ./apk
+
+      # APK size analysis
+      - name: Analyze APK size
+        run: |
+          echo "## APK Analysis Report" >> $GITHUB_STEP_SUMMARY
+          find ./apk -name "*.apk" -type f -exec ls -lh {} \; | while read size rest; do
+            apk_path=$(echo "$rest" | awk '{print $NF}')
+            apk_name=$(basename "$apk_path")
+            echo "- **$apk_name**: $size" >> $GITHUB_STEP_SUMMARY
+          done
+
+  # Automated release preparation
+  release-preparation:
+    name: Release Preparation
+    runs-on: ubuntu-latest
+    needs: [build-matrix, security-analysis, apk-analysis]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all APK artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: apk-*-${{ github.sha }}
+          path: ./release-artifacts
+
+      # Create release summary
+      - name: Create release summary
+        run: |
+          echo "## Release Candidate Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Available APKs**:" >> $GITHUB_STEP_SUMMARY
+          find ./release-artifacts -name "*.apk" -type f | while read apk; do
+            size=$(ls -lh "$apk" | awk '{print $5}')
+            name=$(basename "$apk")
+            echo "  - $name ($size)" >> $GITHUB_STEP_SUMMARY
+          done
+
+      # Upload consolidated release artifacts
+      - name: Upload release candidate artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-${{ github.sha }}
+          path: ./release-artifacts
+          retention-days: 90
+
+  # Build status notification
+  notification:
+    name: Build Notification
+    runs-on: ubuntu-latest
+    needs: [build-matrix, security-analysis, apk-analysis]
+    if: always()
+    
+    steps:
+      - name: Create build status summary
+        run: |
+          echo "## Automated Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ needs.build-matrix.result == 'success' && needs.security-analysis.result == 'success' && needs.apk-analysis.result == 'success' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Matrix**: ${{ needs.build-matrix.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Analysis**: ${{ needs.security-analysis.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **APK Analysis**: ${{ needs.apk-analysis.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow**: Enhanced Android CI" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
