@@ -33,10 +33,24 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
+          api-level: 34
           packages: |
             platform-tools
             platforms;android-34
             build-tools;34.0.0
+
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      - name: Verify Android SDK Installation
+        run: |
+          echo "Android SDK Path: $ANDROID_HOME"
+          echo "Available platforms:"
+          ls -la $ANDROID_HOME/platforms/ || echo "No platforms directory"
+          echo "Available build-tools:"
+          ls -la $ANDROID_HOME/build-tools/ || echo "No build-tools directory"
+          echo "Platform-tools:"
+          ls -la $ANDROID_HOME/platform-tools/ || echo "No platform-tools directory"
 
       # The gradlew file is at the root level, so we run Gradle commands from there
       - name: Make Gradle wrapper executable
