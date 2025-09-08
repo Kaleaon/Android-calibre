@@ -9,6 +9,11 @@ local.properties
 release.keystore
 production.keystore
 *.p12
+*.jks
+*.keystore
+keystore/
+app/keystore/
+CleverFerret/keystore/
 
 # IDE files
 .idea/

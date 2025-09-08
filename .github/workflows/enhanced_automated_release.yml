@@ -200,6 +200,7 @@ jobs:
         with:
           cache-read-only: false
 
+      # Set up Android SDK and Signing
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -212,6 +213,32 @@ jobs:
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
+      # Configure release signing (only for release variant)
+      - name: Configure release signing
+        if: matrix.variant == 'release'
+        run: |
+          # Create keystore from base64 encoded secret (if available)
+          if [[ -n "${{ secrets.KEYSTORE_BASE64 }}" ]]; then
+            echo "Setting up release keystore from secrets..."
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+            
+            # Set environment variables for Gradle
+            echo "KEYSTORE_FILE=${{ github.workspace }}/release.keystore" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+            
+            echo "✓ Release signing configured"
+          else
+            echo "⚠️  No release keystore secrets configured"
+            echo "   Release APK will be signed with debug keystore (development only)"
+            echo "   For production releases, configure these GitHub Secrets:"
+            echo "   - KEYSTORE_BASE64: Base64 encoded keystore file"
+            echo "   - KEYSTORE_PASSWORD: Keystore password"
+            echo "   - KEY_ALIAS: Key alias name"
+            echo "   - KEY_PASSWORD: Key password"
+          fi
+
       # Update version in build files
       - name: Update version information
         run: |
@@ -222,12 +249,24 @@ jobs:
           echo "Updated build.gradle.kts with version ${{ needs.version-management.outputs.version_name }} (code: ${{ needs.version-management.outputs.version_code }})"
           grep -n "version" CleverFerret/build.gradle.kts
 
-      # Build with optimizations
+      # Build with optimizations and proper signing
       - name: Build ${{ matrix.variant }} APK
         run: |
           echo "Building ${{ matrix.variant }} APK..."
           if [[ "${{ matrix.variant }}" == "release" ]]; then
             ./gradlew assembleRelease --stacktrace --build-cache
+            
+            # Verify signing after build
+            echo "Verifying APK signing..."
+            if [[ -f "CleverFerret/build/outputs/apk/release/CleverFerret-release.apk" ]]; then
+              # Check if APK is properly signed
+              $ANDROID_HOME/build-tools/34.0.0/aapt dump badging CleverFerret/build/outputs/apk/release/CleverFerret-release.apk | grep "package:"
+              
+              # Verify signature (if jarsigner is available)
+              if command -v jarsigner &> /dev/null; then
+                jarsigner -verify -verbose CleverFerret/build/outputs/apk/release/CleverFerret-release.apk || echo "⚠️  APK signature verification failed"
+              fi
+            fi
           else
             ./gradlew assembleDebug --stacktrace --build-cache
           fi
@@ -252,6 +291,16 @@ jobs:
             fi
           done
           ls -la
+
+      # Cleanup and secure keystore removal
+      - name: Cleanup sensitive files
+        if: always() && matrix.variant == 'release'
+        run: |
+          # Remove keystore file if it was created
+          if [[ -f "release.keystore" ]]; then
+            rm -f release.keystore
+            echo "✓ Temporary keystore file cleaned up"
+          fi
 
       # Upload APK artifacts
       - name: Upload ${{ matrix.variant }} APK
