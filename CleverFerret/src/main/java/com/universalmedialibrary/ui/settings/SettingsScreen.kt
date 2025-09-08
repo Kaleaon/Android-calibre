@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.RotateRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,7 +31,7 @@ fun SettingsScreen(
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -229,7 +231,7 @@ private fun getReaderSettingsItems(): List<SettingsMenuItem> = listOf(
     SettingsMenuItem(
         title = "Auto-Scroll",
         subtitle = "Hands-free reading settings",
-        icon = Icons.Default.RotateRight,
+        icon = Icons.AutoMirrored.Filled.RotateRight,
         route = "settings/reader/autoscroll"
     ),
     SettingsMenuItem(
