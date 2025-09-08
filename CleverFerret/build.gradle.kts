@@ -51,7 +51,6 @@ android {
         debug {
             // Use default debug signing config (Android will create debug keystore automatically)
             signingConfig = signingConfigs.getByName("debug")
- main
         }
         release {
             isMinifyEnabled = false
