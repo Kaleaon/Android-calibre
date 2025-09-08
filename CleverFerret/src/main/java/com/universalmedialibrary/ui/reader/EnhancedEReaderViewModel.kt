@@ -5,22 +5,39 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.universalmedialibrary.data.settings.SettingsRepository
+import com.universalmedialibrary.data.settings.ReaderSettings as AppReaderSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
+data class TTSState(
+    val isPlaying: Boolean = false,
+    val isPaused: Boolean = false,
+    val speed: Float = 1.0f,
+    val isInitialized: Boolean = false
+)
+
 @HiltViewModel
-class EnhancedEReaderViewModel @Inject constructor() : ViewModel() {
+class EnhancedEReaderViewModel @Inject constructor(
+    private val settingsRepository: SettingsRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EReaderUiState())
     val uiState: StateFlow<EReaderUiState> = _uiState.asStateFlow()
 
-    private val _readerSettings = MutableStateFlow(ReaderSettings())
-    val readerSettings: StateFlow<ReaderSettings> = _readerSettings.asStateFlow()
+    // Use the global reader settings
+    val readerSettings = settingsRepository.readerSettings.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = AppReaderSettings()
+    )
 
     private val _ttsState = MutableStateFlow(TTSState())
     val ttsState: StateFlow<TTSState> = _ttsState.asStateFlow()
@@ -91,33 +108,43 @@ class EnhancedEReaderViewModel @Inject constructor() : ViewModel() {
 
     // Font and display settings
     fun increaseFontSize() {
-        val currentSettings = _readerSettings.value
-        if (currentSettings.fontSize < 24f) {
-            _readerSettings.value = currentSettings.copy(
-                fontSize = currentSettings.fontSize + 1f
-            )
+        viewModelScope.launch {
+            val currentSettings = readerSettings.value
+            if (currentSettings.fontSize < 32f) {
+                settingsRepository.updateReaderSettings(
+                    currentSettings.copy(fontSize = currentSettings.fontSize + 1f)
+                )
+            }
         }
     }
 
     fun decreaseFontSize() {
-        val currentSettings = _readerSettings.value
-        if (currentSettings.fontSize > 10f) {
-            _readerSettings.value = currentSettings.copy(
-                fontSize = currentSettings.fontSize - 1f
-            )
+        viewModelScope.launch {
+            val currentSettings = readerSettings.value
+            if (currentSettings.fontSize > 8f) {
+                settingsRepository.updateReaderSettings(
+                    currentSettings.copy(fontSize = currentSettings.fontSize - 1f)
+                )
+            }
         }
     }
 
     fun toggleDarkMode() {
-        _readerSettings.value = _readerSettings.value.copy(
-            isDarkMode = !_readerSettings.value.isDarkMode
-        )
+        viewModelScope.launch {
+            val currentSettings = readerSettings.value
+            settingsRepository.updateReaderSettings(
+                currentSettings.copy(isDarkMode = !currentSettings.isDarkMode)
+            )
+        }
     }
 
     fun toggleJustified() {
-        _readerSettings.value = _readerSettings.value.copy(
-            isJustified = !_readerSettings.value.isJustified
-        )
+        viewModelScope.launch {
+            val currentSettings = readerSettings.value
+            settingsRepository.updateReaderSettings(
+                currentSettings.copy(isJustified = !currentSettings.isJustified)
+            )
+        }
     }
 
     // Text-to-Speech functionality
