@@ -41,7 +41,7 @@ jobs:
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: automated-build-apk-${{ github.event.inputs.build_type || 'debug' }}
+          name: automated-build-apk-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_type || 'debug' }}
           path: |
             **/build/outputs/apk/**/*.apk
           retention-days: 30
