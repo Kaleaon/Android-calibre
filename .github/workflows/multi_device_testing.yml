@@ -1,0 +1,389 @@
+# Automated Multi-Device Testing Workflow
+# Tests the app across multiple Android versions and device configurations
+
+name: Multi-Device Testing
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    # Run nightly tests at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_level:
+        description: 'Test level'
+        required: true
+        default: 'standard'
+        type: choice
+        options:
+        - quick
+        - standard
+        - comprehensive
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
+  JAVA_TOOL_OPTIONS: "-Xmx4g -XX:+UseParallelGC"
+
+jobs:
+  # Determine test configuration based on trigger
+  test-config:
+    name: Determine Test Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      test-matrix: ${{ steps.config.outputs.matrix }}
+      test-level: ${{ steps.config.outputs.level }}
+    
+    steps:
+      - name: Configure test matrix
+        id: config
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]] || [[ "${{ github.event.inputs.test_level }}" == "comprehensive" ]]; then
+            # Comprehensive testing for nightly runs
+            matrix='[
+              {"api": 24, "arch": "x86", "target": "default"},
+              {"api": 26, "arch": "x86", "target": "default"},
+              {"api": 28, "arch": "x86_64", "target": "default"},
+              {"api": 30, "arch": "x86_64", "target": "google_apis"},
+              {"api": 31, "arch": "x86_64", "target": "google_apis"},
+              {"api": 33, "arch": "x86_64", "target": "google_apis"},
+              {"api": 34, "arch": "x86_64", "target": "google_apis"}
+            ]'
+            level="comprehensive"
+          elif [[ "${{ github.event.inputs.test_level }}" == "quick" ]]; then
+            # Quick testing
+            matrix='[
+              {"api": 30, "arch": "x86_64", "target": "google_apis"}
+            ]'
+            level="quick"
+          else
+            # Standard testing for PRs and pushes
+            matrix='[
+              {"api": 24, "arch": "x86", "target": "default"},
+              {"api": 30, "arch": "x86_64", "target": "google_apis"},
+              {"api": 34, "arch": "x86_64", "target": "google_apis"}
+            ]'
+            level="standard"
+          fi
+          
+          echo "matrix=${matrix}" >> $GITHUB_OUTPUT
+          echo "level=${level}" >> $GITHUB_OUTPUT
+          
+          echo "## Test Configuration: ${level}" >> $GITHUB_STEP_SUMMARY
+          echo "${matrix}" | jq -r '.[] | "- API \(.api) (\(.arch)) - \(.target)"' >> $GITHUB_STEP_SUMMARY
+
+  # Unit tests (fast feedback)
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Generate test coverage
+        run: ./gradlew jacocoTestReport
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results-${{ github.sha }}
+          path: |
+            CleverFerret/build/reports/tests/
+            CleverFerret/build/reports/jacoco/
+          retention-days: 14
+
+  # Instrumentation tests on emulators
+  instrumentation-tests:
+    name: API ${{ matrix.config.api }} (${{ matrix.config.arch }}) - ${{ matrix.config.target }}
+    runs-on: ubuntu-latest
+    needs: [test-config, unit-tests]
+    if: needs.unit-tests.result == 'success'
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        config: ${{ fromJson(needs.test-config.outputs.test-matrix) }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
+      # Enhanced Android SDK setup with specific packages
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: ${{ matrix.config.api }}
+          packages: |
+            platform-tools
+            platforms;android-${{ matrix.config.api }}
+            build-tools;34.0.0
+            system-images;android-${{ matrix.config.api }};${{ matrix.config.target }};${{ matrix.config.arch }}
+            emulator
+
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      # Enable hardware acceleration
+      - name: Enable KVM for hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # AVD caching with specific configuration
+      - name: AVD cache for API ${{ matrix.config.api }}
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-api${{ matrix.config.api }}-${{ matrix.config.arch }}-${{ matrix.config.target }}-v2
+
+      # Create AVD with specific configuration
+      - name: Create AVD
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.config.api }}
+          arch: ${{ matrix.config.arch }}
+          target: ${{ matrix.config.target }}
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-boot-anim -no-audio -camera-back none -camera-front none
+          disable-animations: false
+          script: echo "AVD created and cached"
+
+      # Build debug APK for testing
+      - name: Build debug APK
+        run: ./gradlew assembleDebug assembleDebugAndroidTest --stacktrace
+
+      # Run instrumentation tests with retry logic
+      - name: Run instrumentation tests with retry
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.config.api }}
+          arch: ${{ matrix.config.arch }}
+          target: ${{ matrix.config.target }}
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -no-boot-anim -no-audio -camera-back none -camera-front none
+          disable-animations: true
+          script: |
+            echo "Starting instrumentation tests..."
+            adb wait-for-device
+            adb shell input keyevent 82  # Unlock device
+            
+            # Install APKs
+            adb install CleverFerret/build/outputs/apk/debug/CleverFerret-debug.apk
+            adb install CleverFerret/build/outputs/apk/androidTest/debug/CleverFerret-debug-androidTest.apk
+            
+            # Run tests with retry logic
+            for i in {1..3}; do
+              echo "Test attempt $i for API ${{ matrix.config.api }}"
+              if adb shell am instrument -w -r -e debug false com.universalmedialibrary.test/androidx.test.runner.AndroidJUnitRunner; then
+                echo "Tests passed on attempt $i"
+                break
+              elif [ $i -eq 3 ]; then
+                echo "Tests failed after 3 attempts"
+                exit 1
+              else
+                echo "Test attempt $i failed, retrying in 30 seconds..."
+                sleep 30
+                # Clear app data and restart
+                adb shell pm clear com.universalmedialibrary || true
+              fi
+            done
+
+      # Collect test artifacts
+      - name: Collect test artifacts
+        if: always()
+        run: |
+          # Create artifacts directory
+          mkdir -p test-artifacts/api${{ matrix.config.api }}
+          
+          # Collect logcat
+          adb logcat -d > test-artifacts/api${{ matrix.config.api }}/logcat.txt || true
+          
+          # Collect test results
+          ./gradlew connectedDebugAndroidTest --continue || true
+          
+          # Copy test reports
+          if [[ -d "CleverFerret/build/reports/androidTests" ]]; then
+            cp -r CleverFerret/build/reports/androidTests test-artifacts/api${{ matrix.config.api }}/
+          fi
+
+      # Upload test results and artifacts
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: instrumentation-test-api${{ matrix.config.api }}-${{ matrix.config.arch }}-${{ github.sha }}
+          path: |
+            test-artifacts/
+            CleverFerret/build/reports/androidTests/
+            CleverFerret/build/outputs/androidTest-results/
+          retention-days: 14
+
+  # Performance testing on key devices
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [test-config, unit-tests]
+    if: needs.test-config.outputs.test-level != 'quick'
+    
+    strategy:
+      matrix:
+        config: [
+          {"api": 30, "arch": "x86_64", "target": "google_apis", "name": "modern"},
+          {"api": 24, "arch": "x86", "target": "default", "name": "legacy"}
+        ]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: ${{ matrix.config.api }}
+          packages: |
+            platform-tools
+            platforms;android-${{ matrix.config.api }}
+            build-tools;34.0.0
+            system-images;android-${{ matrix.config.api }};${{ matrix.config.target }};${{ matrix.config.arch }}
+            emulator
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run performance tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.config.api }}
+          arch: ${{ matrix.config.arch }}
+          target: ${{ matrix.config.target }}
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -no-boot-anim -no-audio
+          disable-animations: true
+          script: |
+            echo "Running performance tests on ${{ matrix.config.name }} device (API ${{ matrix.config.api }})"
+            
+            # Install app
+            ./gradlew assembleDebug
+            adb install CleverFerret/build/outputs/apk/debug/CleverFerret-debug.apk
+            
+            # Collect performance metrics
+            echo "=== Performance Metrics ===" > performance-${{ matrix.config.name }}.log
+            
+            # App startup time
+            echo "Measuring app startup time..." >> performance-${{ matrix.config.name }}.log
+            for i in {1..5}; do
+              adb shell am force-stop com.universalmedialibrary
+              sleep 2
+              start_time=$(date +%s%3N)
+              adb shell am start -W -n com.universalmedialibrary/.MainActivity
+              end_time=$(date +%s%3N)
+              startup_time=$((end_time - start_time))
+              echo "Startup $i: ${startup_time}ms" >> performance-${{ matrix.config.name }}.log
+            done
+            
+            # Memory usage
+            echo "Measuring memory usage..." >> performance-${{ matrix.config.name }}.log
+            adb shell dumpsys meminfo com.universalmedialibrary >> performance-${{ matrix.config.name }}.log
+            
+            # CPU usage
+            echo "Measuring CPU usage..." >> performance-${{ matrix.config.name }}.log
+            adb shell top -n 1 | grep com.universalmedialibrary >> performance-${{ matrix.config.name }}.log
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-tests-${{ matrix.config.name }}-${{ github.sha }}
+          path: performance-*.log
+          retention-days: 30
+
+  # Test results summary
+  test-summary:
+    name: Test Results Summary
+    runs-on: ubuntu-latest
+    needs: [test-config, unit-tests, instrumentation-tests]
+    if: always()
+    
+    steps:
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*test*-${{ github.sha }}"
+          path: ./all-test-results
+
+      - name: Create test summary
+        run: |
+          echo "## 🧪 Multi-Device Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Level**: ${{ needs.test-config.outputs.test-level }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Test Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unit Tests**: ${{ needs.unit-tests.result == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Instrumentation Tests**: ${{ needs.instrumentation-tests.result == 'success' && '✅ Passed' || needs.instrumentation-tests.result == 'failure' && '❌ Failed' || '⚠️ Skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "Test coverage reports are available in the artifacts." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Available Test Artifacts" >> $GITHUB_STEP_SUMMARY
+          find ./all-test-results -name "*.html" -o -name "*.xml" | head -10 | while read file; do
+            echo "- $(basename "$file")" >> $GITHUB_STEP_SUMMARY
+          done || echo "- No test artifacts found" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload consolidated test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-test-results-${{ github.sha }}
+          path: ./all-test-results
+          retention-days: 30

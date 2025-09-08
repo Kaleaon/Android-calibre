@@ -1,0 +1,404 @@
+# Enhanced Automated Release with Semantic Versioning
+# Implements automated release features including:
+# - Semantic version calculation
+# - Automated changelog generation
+# - Multi-format APK distribution
+# - Release asset optimization
+# - Post-release automation
+
+name: Enhanced Automated Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+      pre_release:
+        description: 'Mark as pre-release'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
+  JAVA_TOOL_OPTIONS: "-Xmx4g -XX:+UseParallelGC"
+
+jobs:
+  # Version calculation and validation
+  version-management:
+    name: Version Management
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_name: ${{ steps.version.outputs.version_name }}
+      version_code: ${{ steps.version.outputs.version_code }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # Manual release - calculate next version
+            current_version=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            echo "Current version: $current_version"
+            
+            # Remove 'v' prefix
+            version_num=${current_version#v}
+            IFS='.' read -ra ADDR <<< "$version_num"
+            major=${ADDR[0]:-0}
+            minor=${ADDR[1]:-0}
+            patch=${ADDR[2]:-0}
+            
+            case "${{ github.event.inputs.version_type }}" in
+              major)
+                major=$((major + 1))
+                minor=0
+                patch=0
+                ;;
+              minor)
+                minor=$((minor + 1))
+                patch=0
+                ;;
+              patch)
+                patch=$((patch + 1))
+                ;;
+            esac
+            
+            new_version="v${major}.${minor}.${patch}"
+            version_name="${major}.${minor}.${patch}"
+            version_code=$((major * 10000 + minor * 100 + patch))
+            is_prerelease="${{ github.event.inputs.pre_release }}"
+          else
+            # Tag-based release
+            new_version="${{ github.ref_name }}"
+            version_name="${new_version#v}"
+            IFS='.' read -ra ADDR <<< "$version_name"
+            major=${ADDR[0]:-1}
+            minor=${ADDR[1]:-0}
+            patch=${ADDR[2]:-0}
+            version_code=$((major * 10000 + minor * 100 + patch))
+            is_prerelease="true"
+          fi
+          
+          echo "version=${new_version}" >> $GITHUB_OUTPUT
+          echo "version_name=${version_name}" >> $GITHUB_OUTPUT
+          echo "version_code=${version_code}" >> $GITHUB_OUTPUT
+          echo "is_prerelease=${is_prerelease}" >> $GITHUB_OUTPUT
+          
+          echo "## Version Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${new_version}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Name**: ${version_name}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Code**: ${version_code}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pre-release**: ${is_prerelease}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "Generating changelog..."
+          
+          # Get the last tag
+          last_tag=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          
+          if [[ -n "$last_tag" ]]; then
+            echo "Generating changelog from $last_tag to HEAD"
+            
+            # Generate changelog
+            changelog=$(cat << EOF
+          ## What's Changed
+          
+          ### 🚀 Features
+          $(git log ${last_tag}..HEAD --oneline --grep="feat\|feature" --pretty="- %s" || echo "- No new features")
+          
+          ### 🐛 Bug Fixes
+          $(git log ${last_tag}..HEAD --oneline --grep="fix\|bug" --pretty="- %s" || echo "- No bug fixes")
+          
+          ### 🔧 Improvements
+          $(git log ${last_tag}..HEAD --oneline --grep="improve\|enhance\|refactor" --pretty="- %s" || echo "- No improvements")
+          
+          ### 📝 Documentation
+          $(git log ${last_tag}..HEAD --oneline --grep="doc\|docs" --pretty="- %s" || echo "- No documentation changes")
+          
+          ### 🧪 Testing
+          $(git log ${last_tag}..HEAD --oneline --grep="test" --pretty="- %s" || echo "- No testing changes")
+          
+          ### 🔄 Other Changes
+          $(git log ${last_tag}..HEAD --oneline --pretty="- %s" | grep -vE "(feat\||feature\||fix\||bug\||improve\||enhance\||refactor\||doc\||docs\||test\|)" | head -10 || echo "- No other changes")
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${last_tag}...${{ steps.version.outputs.version }}
+          EOF
+          )
+          else
+            changelog="## Universal Media Library ${{ steps.version.outputs.version_name }}
+
+          This is the first release of the Universal Media Library for Android.
+
+          ### ✨ Features
+          - Modern Material You UI design
+          - Calibre library import capability
+          - Local library management
+          - Room database for data storage
+          - Hilt dependency injection
+          - Comprehensive testing suite
+
+          ### 📱 Installation
+          Download the APK and install on your Android device (requires Android 7.0+ / API 24+).
+
+          ### 🚀 First Run
+          The app starts in a clean state with no libraries. You can:
+          1. Create a new library using the '+' button
+          2. Import an existing Calibre library from the menu
+
+          **Note**: This is an early development release. More features are coming soon!"
+          fi
+          
+          # Save changelog (escape for GitHub Actions)
+          {
+            echo 'changelog<<EOF'
+            echo "$changelog"
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+  # Build optimized release APKs
+  build-release:
+    name: Build Release APKs
+    runs-on: ubuntu-latest
+    needs: version-management
+    
+    strategy:
+      matrix:
+        variant: [release, debug]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 34
+          packages: |
+            platform-tools
+            platforms;android-34
+            build-tools;34.0.0
+
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      # Update version in build files
+      - name: Update version information
+        run: |
+          # Update version in build.gradle.kts
+          sed -i "s/versionCode = [0-9]*/versionCode = ${{ needs.version-management.outputs.version_code }}/" CleverFerret/build.gradle.kts
+          sed -i "s/versionName = \"[^\"]*\"/versionName = \"${{ needs.version-management.outputs.version_name }}\"/" CleverFerret/build.gradle.kts
+          
+          echo "Updated build.gradle.kts with version ${{ needs.version-management.outputs.version_name }} (code: ${{ needs.version-management.outputs.version_code }})"
+          grep -n "version" CleverFerret/build.gradle.kts
+
+      # Build with optimizations
+      - name: Build ${{ matrix.variant }} APK
+        run: |
+          echo "Building ${{ matrix.variant }} APK..."
+          if [[ "${{ matrix.variant }}" == "release" ]]; then
+            ./gradlew assembleRelease --stacktrace --build-cache
+          else
+            ./gradlew assembleDebug --stacktrace --build-cache
+          fi
+
+      # Optimize APK (only for release)
+      - name: Optimize APK
+        if: matrix.variant == 'release'
+        run: |
+          echo "Optimizing release APK..."
+          # Add any APK optimization steps here
+          ls -la CleverFerret/build/outputs/apk/release/
+
+      # Calculate APK checksums
+      - name: Calculate APK checksums
+        run: |
+          cd CleverFerret/build/outputs/apk/${{ matrix.variant }}
+          for apk in *.apk; do
+            if [[ -f "$apk" ]]; then
+              echo "Calculating checksums for $apk"
+              sha256sum "$apk" > "${apk}.sha256"
+              md5sum "$apk" > "${apk}.md5"
+            fi
+          done
+          ls -la
+
+      # Upload APK artifacts
+      - name: Upload ${{ matrix.variant }} APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: universal-media-library-${{ matrix.variant }}-${{ needs.version-management.outputs.version_name }}
+          path: |
+            CleverFerret/build/outputs/apk/${{ matrix.variant }}/*.apk
+            CleverFerret/build/outputs/apk/${{ matrix.variant }}/*.sha256
+            CleverFerret/build/outputs/apk/${{ matrix.variant }}/*.md5
+            CleverFerret/build/outputs/mapping/${{ matrix.variant }}/**/*.txt
+          retention-days: 90
+
+  # Create GitHub release
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [version-management, build-release]
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download release APK
+        uses: actions/download-artifact@v4
+        with:
+          name: universal-media-library-release-${{ needs.version-management.outputs.version_name }}
+          path: ./release-assets
+
+      - name: Download debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: universal-media-library-debug-${{ needs.version-management.outputs.version_name }}
+          path: ./debug-assets
+
+      # Prepare release assets
+      - name: Prepare release assets
+        run: |
+          echo "Preparing release assets..."
+          mkdir -p ./final-release
+          
+          # Copy and rename release APK
+          find ./release-assets -name "*.apk" -exec cp {} ./final-release/universal-media-library-v${{ needs.version-management.outputs.version_name }}.apk \;
+          
+          # Copy debug APK
+          find ./debug-assets -name "*.apk" -exec cp {} ./final-release/universal-media-library-v${{ needs.version-management.outputs.version_name }}-debug.apk \;
+          
+          # Copy checksums
+          find ./release-assets -name "*.sha256" -exec cp {} ./final-release/ \;
+          find ./release-assets -name "*.md5" -exec cp {} ./final-release/ \;
+          
+          # Create installation guide
+          cat > ./final-release/INSTALLATION.md << EOF
+          # Universal Media Library v${{ needs.version-management.outputs.version_name }} - Installation Guide
+          
+          ## System Requirements
+          - Android 7.0 (API level 24) or higher
+          - At least 100 MB of free storage space
+          
+          ## Installation Steps
+          1. Download the APK file: \`universal-media-library-v${{ needs.version-management.outputs.version_name }}.apk\`
+          2. Enable "Install from unknown sources" in your Android settings
+          3. Open the downloaded APK file and follow the installation prompts
+          
+          ## File Verification
+          You can verify the integrity of the APK file using the provided checksums:
+          - SHA256: \`cat universal-media-library-v${{ needs.version-management.outputs.version_name }}.apk.sha256\`
+          - MD5: \`cat universal-media-library-v${{ needs.version-management.outputs.version_name }}.apk.md5\`
+          
+          ## First Run
+          The app starts in a clean state. You can:
+          1. Create a new library using the '+' button
+          2. Import an existing Calibre library from the menu
+          
+          For troubleshooting, see: https://github.com/${{ github.repository }}/blob/main/INSTALL.md
+          EOF
+          
+          ls -la ./final-release/
+
+      # Create or update tag for manual releases
+      - name: Create tag for manual release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag ${{ needs.version-management.outputs.version }}
+          git push origin ${{ needs.version-management.outputs.version }}
+
+      # Create GitHub release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.version-management.outputs.version }}
+          name: Universal Media Library ${{ needs.version-management.outputs.version }}
+          body: ${{ needs.version-management.outputs.changelog }}
+          draft: false
+          prerelease: ${{ needs.version-management.outputs.is_prerelease }}
+          files: |
+            ./final-release/universal-media-library-v${{ needs.version-management.outputs.version_name }}.apk
+            ./final-release/universal-media-library-v${{ needs.version-management.outputs.version_name }}-debug.apk
+            ./final-release/*.sha256
+            ./final-release/*.md5
+            ./final-release/INSTALLATION.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Post-release automation
+  post-release:
+    name: Post-Release Automation
+    runs-on: ubuntu-latest
+    needs: [version-management, create-release]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Update documentation
+      - name: Update release documentation
+        run: |
+          echo "## Latest Release: ${{ needs.version-management.outputs.version }}" > LATEST_RELEASE.md
+          echo "" >> LATEST_RELEASE.md
+          echo "**Version**: ${{ needs.version-management.outputs.version_name }}" >> LATEST_RELEASE.md
+          echo "**Release Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> LATEST_RELEASE.md
+          echo "**Pre-release**: ${{ needs.version-management.outputs.is_prerelease }}" >> LATEST_RELEASE.md
+          echo "" >> LATEST_RELEASE.md
+          echo "Download: [GitHub Releases](https://github.com/${{ github.repository }}/releases/latest)" >> LATEST_RELEASE.md
+
+      # Create summary
+      - name: Create release summary
+        run: |
+          echo "## 🚀 Release ${{ needs.version-management.outputs.version }} Created Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.version-management.outputs.version_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Code**: ${{ needs.version-management.outputs.version_code }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pre-release**: ${{ needs.version-management.outputs.is_prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release URL**: https://github.com/${{ github.repository }}/releases/tag/${{ needs.version-management.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Release Assets" >> $GITHUB_STEP_SUMMARY
+          echo "- Release APK: universal-media-library-v${{ needs.version-management.outputs.version_name }}.apk" >> $GITHUB_STEP_SUMMARY
+          echo "- Debug APK: universal-media-library-v${{ needs.version-management.outputs.version_name }}-debug.apk" >> $GITHUB_STEP_SUMMARY
+          echo "- Checksums and installation guide included" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Test the release on target devices" >> $GITHUB_STEP_SUMMARY
+          echo "- Update documentation if needed" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor for user feedback" >> $GITHUB_STEP_SUMMARY
