@@ -258,8 +258,8 @@ fun LibraryListScreen(navController: NavController, viewModel: MainViewModel = h
         if (showDialog) {
             AddLibraryDialog(
                 onDismiss = { showDialog = false },
-                onAdd = { name ->
-                    viewModel.addLibrary(name, "BOOK", "/path/to/library")
+                onAdd = { name, path ->
+                    viewModel.addLibrary(name, "BOOK", path)
                     showDialog = false
                 }
             )
@@ -446,23 +446,33 @@ fun PlaceholderCover(title: String, author: String?) {
 }
 
 @Composable
-fun AddLibraryDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
+fun AddLibraryDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
+    var path by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add New Library") },
         text = {
-            TextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Library Name") }
-            )
+            Column {
+                TextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Library Name") }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = path,
+                    onValueChange = { path = it },
+                    label = { Text("Library Path") },
+                    placeholder = { Text("/storage/emulated/0/Books") }
+                )
+            }
         },
         confirmButton = {
             Button(
-                onClick = { onAdd(name) },
-                enabled = name.isNotBlank()
+                onClick = { onAdd(name, path) },
+                enabled = name.isNotBlank() && path.isNotBlank()
             ) {
                 Text("Add")
             }
