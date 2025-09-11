@@ -154,7 +154,22 @@ jobs:
             emulator
 
       - name: Accept Android SDK Licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        run: |
+          # Find and use the actual sdkmanager path
+          SDKMANAGER_PATH=""
+          if [[ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]]; then
+            SDKMANAGER_PATH="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          else
+            # Look for sdkmanager in any version directory
+            SDKMANAGER_PATH=$(find "$ANDROID_HOME/cmdline-tools" -name "sdkmanager" -type f 2>/dev/null | head -1)
+          fi
+          
+          if [[ -n "$SDKMANAGER_PATH" ]]; then
+            echo "Found sdkmanager at: $SDKMANAGER_PATH"
+            yes | "$SDKMANAGER_PATH" --licenses || true
+          else
+            echo "Warning: sdkmanager not found, licenses may not be accepted"
+          fi
 
       # Enable hardware acceleration
       - name: Enable KVM for hardware acceleration
