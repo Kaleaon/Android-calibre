@@ -216,8 +216,9 @@ jobs:
           SDKMANAGER_PATH=""
           if [[ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]]; then
             SDKMANAGER_PATH="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          elif [[ -f "$ANDROID_HOME/cmdline-tools/*/bin/sdkmanager" ]]; then
-            SDKMANAGER_PATH=$(find "$ANDROID_HOME/cmdline-tools" -name "sdkmanager" -type f | head -1)
+          else
+            # Look for sdkmanager in any version directory
+            SDKMANAGER_PATH=$(find "$ANDROID_HOME/cmdline-tools" -name "sdkmanager" -type f 2>/dev/null | head -1)
           fi
           
           if [[ -n "$SDKMANAGER_PATH" ]]; then
