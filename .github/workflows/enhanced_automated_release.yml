@@ -211,7 +211,21 @@ jobs:
             build-tools;34.0.0
 
       - name: Accept Android SDK Licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        run: |
+          # Find and use the actual sdkmanager path
+          SDKMANAGER_PATH=""
+          if [[ -f "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]]; then
+            SDKMANAGER_PATH="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          elif [[ -f "$ANDROID_HOME/cmdline-tools/*/bin/sdkmanager" ]]; then
+            SDKMANAGER_PATH=$(find "$ANDROID_HOME/cmdline-tools" -name "sdkmanager" -type f | head -1)
+          fi
+          
+          if [[ -n "$SDKMANAGER_PATH" ]]; then
+            echo "Found sdkmanager at: $SDKMANAGER_PATH"
+            yes | "$SDKMANAGER_PATH" --licenses || true
+          else
+            echo "Warning: sdkmanager not found, licenses may not be accepted"
+          fi
 
       # Configure release signing (only for release variant)
       - name: Configure release signing
