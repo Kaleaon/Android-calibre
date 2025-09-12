@@ -1,0 +1,57 @@
+name: Automated Android Build
+
+# Trigger on manual dispatch and on pushes to feature branches
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+        - debug
+        - release
+  push:
+    branches: 
+      - 'feature/*'
+      - 'automated-build/*'
+
+jobs:
+  automated-build:
+    name: Automated Android App Build
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      actions: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: automated-build-android-app-with-github-action
+        uses: amirisback/automated-build-android-app-with-github-action@2.2.5
+        with:
+          # Configure for CleverFerret project structure
+          app_module_name: 'CleverFerret'
+          build_type: ${{ github.event.inputs.build_type || 'debug' }}
+          java_version: '17'
+          
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: automated-build-apk-${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_type || 'debug' }}
+          path: |
+            **/build/outputs/apk/**/*.apk
+          retention-days: 30
+          
+      - name: Upload build reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: automated-build-reports
+          path: |
+            **/build/reports/**
+            **/build/outputs/logs/**
+          retention-days: 7
