@@ -22,11 +22,10 @@ Always reference these instructions first and fallback to search or bash command
 - Code coverage: `./gradlew jacocoTestReport` -- takes 6 seconds. Requires tests to run first.
 
 ### Lint and Code Quality  
-- Lint check: `./gradlew lint` -- takes 70 seconds but FAILS with 5 errors, 27 warnings. This is EXPECTED.
-- The CI uses `continue-on-error: true` for lint, so lint failures are normal and don't break builds
-- Known lint issues: API level 26 calls used with minSDK 24 (startForegroundService)
-- Run with continue flag: `./gradlew lint --continue` to see all issues
-- Full verification without lint: `./gradlew check -x lint` -- takes 12 seconds, runs all tests
+- Lint check: `./gradlew lint` -- takes ~49 seconds and SUCCEEDS with 31 warnings (0 errors). This is CURRENT STATUS.
+- Known lint issues: DefaultLocale (6), GradleDependency (21), OldTargetApi (1), SwitchIntDef (2), KaptUsageInsteadOfKsp (1)
+- Run with continue flag: `./gradlew lint --continue` to see all issues (though lint succeeds)
+- Full verification without lint: `./gradlew check -x lint` -- takes ~45 seconds, runs all tests including release variant
 
 ### Application Information
 - **Package Name:** `com.universalmedialibrary`
@@ -90,13 +89,13 @@ The app is designed to start in a clean, first-run state:
 ```
 
 ### Timing Expectations (CRITICAL - NEVER CANCEL)
-- **First build**: 5 minutes for `assembleDebug` - Set timeout to 10+ minutes
-- **Release build**: 2 minutes for `assembleRelease` - Set timeout to 5+ minutes  
-- **Unit tests**: 45 seconds for `testDebugUnitTest` - Set timeout to 2+ minutes
-- **Full check without lint**: 12 seconds for `check -x lint` - Set timeout to 1+ minute
-- **Lint check**: 70 seconds (fails with expected errors) - Set timeout to 2+ minutes
+- **First build**: ~5 minutes for `assembleDebug` - Set timeout to 10+ minutes
+- **Release build**: ~2 minutes for `assembleRelease` - Set timeout to 5+ minutes  
+- **Unit tests**: ~2m 27s for `testDebugUnitTest` - Set timeout to 3+ minutes
+- **Full check without lint**: ~45 seconds for `check -x lint` - Set timeout to 2+ minutes
+- **Lint check**: ~49 seconds (succeeds with warnings) - Set timeout to 2+ minutes
 - **Incremental builds**: 1-2 seconds when no changes
-- **Clean**: 2 minutes first time with Gradle setup
+- **Clean**: ~1m 26s first time with Gradle setup
 
 ### Development Dependencies
 The project uses standard Android development dependencies:
@@ -109,10 +108,11 @@ The project uses standard Android development dependencies:
 - **AndroidX**: Latest stable versions
 
 ### Common Build Issues
-- **Lint failures are normal**: The project has 5 known lint errors related to API level compatibility
+- **Lint warnings are expected**: The project has 31 known lint warnings (DefaultLocale, obsolete dependencies, etc.)
 - **Gradle deprecations**: Some deprecation warnings appear but don't affect functionality
 - **Memory**: Gradle is configured with 2GB heap via `gradle.properties`
 - **NDK not required**: Project doesn't use native code
+- **Kotlin warnings**: ~15 Kotlin compiler warnings (deprecated APIs, unused variables, etc.) are expected
 
 ### Release Process
 - Manual release: Follow instructions in `RELEASE.md`
@@ -154,13 +154,18 @@ android {
 ### Test Command Output Reference
 ```bash
 $ ./gradlew testDebugUnitTest
-BUILD SUCCESSFUL in 45s
+BUILD SUCCESSFUL in 2m 27s
 # 20 tests pass including:
 # - LibraryTest
 # - PeopleTest  
 # - MediaItemDaoTest
 # - CalibreImportServiceTest
 # - CalibreImportIntegrationTest
+
+$ ./gradlew check -x lint
+BUILD SUCCESSFUL in 45s
+# Runs tests for debug and release variants
+# 74 actionable tasks: 38 executed, 36 up-to-date
 ```
 
 Always check the specific file you're working on by viewing its current content rather than making assumptions about the codebase structure.
