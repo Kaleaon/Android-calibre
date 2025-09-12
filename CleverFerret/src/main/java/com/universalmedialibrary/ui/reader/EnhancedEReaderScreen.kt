@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import java.util.Locale
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -222,7 +223,7 @@ fun EnhancedEReaderScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 
                                 Text(
-                                    "Speed: ${String.format("%.1f", ttsState.speed)}x",
+                                    "Speed: ${String.format(Locale.getDefault(), "%.1f", ttsState.speed)}x",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                                 

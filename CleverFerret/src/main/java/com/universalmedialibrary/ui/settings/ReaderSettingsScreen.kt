@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.universalmedialibrary.data.settings.ReaderSettings
 import com.universalmedialibrary.data.settings.AutoScrollMode
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,7 +134,7 @@ fun VisualControlsSection(
                 value = settings.lineSpacing,
                 range = 1.0f..3.0f,
                 onValueChange = { onSettingsChange(settings.copy(lineSpacing = it)) },
-                valueDisplay = "${String.format("%.1f", settings.lineSpacing)}x"
+                valueDisplay = "${String.format(Locale.getDefault(), "%.1f", settings.lineSpacing)}x"
             )
             
             // Margins
@@ -398,7 +399,7 @@ fun TTSSection(
                     value = settings.ttsSpeed,
                     range = 0.5f..2.0f,
                     onValueChange = { onSettingsChange(settings.copy(ttsSpeed = it)) },
-                    valueDisplay = "${String.format("%.1f", settings.ttsSpeed)}x"
+                    valueDisplay = "${String.format(Locale.getDefault(), "%.1f", settings.ttsSpeed)}x"
                 )
                 
                 SliderSetting(
@@ -406,7 +407,7 @@ fun TTSSection(
                     value = settings.ttsPitch,
                     range = 0.5f..2.0f,
                     onValueChange = { onSettingsChange(settings.copy(ttsPitch = it)) },
-                    valueDisplay = "${String.format("%.1f", settings.ttsPitch)}x"
+                    valueDisplay = "${String.format(Locale.getDefault(), "%.1f", settings.ttsPitch)}x"
                 )
             }
         }
