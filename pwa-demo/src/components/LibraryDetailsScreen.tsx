@@ -70,48 +70,131 @@ const BookCard: React.FC<{
   }
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card 
+      sx={{ 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        borderRadius: 2,
+        transition: 'all 0.3s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+        }
+      }}
+    >
       <CardMedia
         component="div"
         sx={{
-          height: 200,
-          bgcolor: 'grey.200',
+          height: 220,
+          background: 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          position: 'relative'
         }}
       >
         {book.metadataCommon.thumbnailPath ? (
           <img 
             src={book.metadataCommon.thumbnailPath} 
             alt={book.metadataCommon.title}
-            style={{ maxHeight: '100%', maxWidth: '100%' }}
+            style={{ 
+              maxHeight: '100%', 
+              maxWidth: '100%',
+              borderRadius: '4px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+            }}
           />
         ) : (
-          <BookIcon sx={{ fontSize: 60, color: 'grey.400' }} />
+          <BookIcon 
+            sx={{ 
+              fontSize: 64, 
+              color: 'grey.400',
+              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
+            }} 
+          />
+        )}
+        {book.metadataCommon.isFavorite && (
+          <StarIcon 
+            sx={{ 
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: '#FFD700',
+              fontSize: 20,
+              filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))'
+            }}
+          />
         )}
       </CardMedia>
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Typography variant="h6" component="h2" noWrap>
+      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+        <Typography 
+          variant="h6" 
+          component="h2" 
+          sx={{
+            fontWeight: 600,
+            fontSize: '1rem',
+            lineHeight: 1.3,
+            mb: 1,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
           {book.metadataCommon.title || book.mediaItem.fileName}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography 
+          variant="body2" 
+          color="text.secondary"
+          sx={{
+            mb: 1.5,
+            display: '-webkit-box',
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
           {book.metadataBook?.author || 'Unknown Author'}
         </Typography>
         {book.metadataBook?.series && (
           <Chip
             size="small"
             label={book.metadataBook.series}
-            sx={{ mt: 1 }}
+            sx={{ 
+              mb: 1,
+              fontSize: '0.75rem',
+              height: 24,
+              bgcolor: 'primary.light',
+              color: 'primary.contrastText'
+            }}
           />
         )}
       </CardContent>
-      <CardActions>
-        <Button size="small" onClick={onClick}>
+      <CardActions sx={{ p: 2, pt: 0 }}>
+        <Button 
+          size="small" 
+          onClick={onClick}
+          sx={{
+            borderRadius: 2,
+            textTransform: 'none',
+            fontWeight: 600,
+          }}
+        >
           Read
         </Button>
-        <IconButton size="small" onClick={onFavoriteToggle}>
-          {book.metadataCommon.isFavorite ? <StarIcon color="primary" /> : <StarBorderIcon />}
+        <IconButton 
+          size="small" 
+          onClick={onFavoriteToggle}
+          sx={{ 
+            ml: 'auto',
+            color: book.metadataCommon.isFavorite ? '#FFD700' : 'text.secondary',
+            '&:hover': {
+              color: '#FFD700'
+            }
+          }}
+        >
+          {book.metadataCommon.isFavorite ? <StarIcon /> : <StarBorderIcon />}
         </IconButton>
       </CardActions>
     </Card>
@@ -195,22 +278,45 @@ export const LibraryDetailsScreen: React.FC = () => {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" elevation={0}>
+      <AppBar 
+        position="static" 
+        elevation={0}
+        sx={{
+          background: 'linear-gradient(135deg, #6750A4 0%, #7C4DFF 100%)',
+        }}
+      >
         <Toolbar>
           <IconButton
             edge="start"
             color="inherit"
             onClick={() => navigate('/')}
-            sx={{ mr: 2 }}
+            sx={{ 
+              mr: 2,
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.1)'
+              }
+            }}
           >
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              flexGrow: 1,
+              fontWeight: 600,
+            }}
+          >
             Library Contents
           </Typography>
           <IconButton
             color="inherit"
             onClick={() => setShowFilters(!showFilters)}
+            sx={{
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.1)'
+              }
+            }}
           >
             <FilterListIcon />
           </IconButton>
@@ -218,21 +324,40 @@ export const LibraryDetailsScreen: React.FC = () => {
       </AppBar>
 
       <Box sx={{ p: 2 }}>
-        {/* Search Bar */}
-        <TextField
-          fullWidth
-          placeholder="Search books..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
+        {/* Search Bar with enhanced design */}
+        <Card 
+          elevation={0}
+          sx={{ 
+            mb: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2
           }}
-          sx={{ mb: 2 }}
-        />
+        >
+          <CardContent sx={{ p: 2 }}>
+            <TextField
+              fullWidth
+              placeholder="Search by title, author, or filename..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ 
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'primary.main',
+                  },
+                },
+              }}
+            />
+          </CardContent>
+        </Card>
 
         {/* View Mode Toggle */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -263,13 +388,66 @@ export const LibraryDetailsScreen: React.FC = () => {
             <CircularProgress />
           </Box>
         ) : filteredBooks.length === 0 ? (
-          <Box textAlign="center" mt={4}>
-            <Typography variant="h6" gutterBottom>
+          <Box 
+            textAlign="center" 
+            mt={6}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              maxWidth: 400,
+              mx: 'auto',
+              px: 3
+            }}
+          >
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: searchQuery 
+                  ? 'linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%)'
+                  : 'linear-gradient(135deg, #6750A4 0%, #7C4DFF 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 3,
+                opacity: 0.8
+              }}
+            >
+              <SearchIcon sx={{ fontSize: 40, color: 'white' }} />
+            </Box>
+            
+            <Typography 
+              variant="h6" 
+              gutterBottom
+              sx={{ 
+                fontWeight: 600,
+                mb: 1
+              }}
+            >
               {searchQuery ? 'No books found matching your search' : 'No books in this library'}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {searchQuery ? 'Try a different search term' : 'Add some books to get started'}
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ 
+                lineHeight: 1.5,
+                opacity: 0.8
+              }}
+            >
+              {searchQuery ? 'Try a different search term or browse all books' : 'Add some books to get started with your collection'}
             </Typography>
+            
+            {searchQuery && (
+              <Button
+                variant="outlined"
+                onClick={() => setSearchQuery('')}
+                sx={{ mt: 2 }}
+              >
+                Clear Search
+              </Button>
+            )}
           </Box>
         ) : viewMode === ViewMode.LIST ? (
           <List>
