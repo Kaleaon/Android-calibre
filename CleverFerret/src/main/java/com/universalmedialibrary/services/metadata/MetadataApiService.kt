@@ -26,14 +26,46 @@ data class MetadataSearchResult(
 )
 
 enum class MetadataSource {
+    // Book sources (matching Calibre plugins)
     GOOGLE_BOOKS,
     OPEN_LIBRARY,
+    AMAZON_PRODUCT_ADVERTISING,
+    GOODREADS,
+    HARDCOVER,
+    ISFDB, // Internet Speculative Fiction Database
+    FANTASTIC_FICTION,
+    FICTION_DB,
+    LIBRARY_THING,
+    WORLDCAT_OCLC,
+    
+    // Comic/Manga sources
+    COMICVINE,
+    MANGA_UPDATES,
+    
+    // Movie/TV sources
     TMDB,
     OMDB,
+    IMDB,
+    TVDB,
+    
+    // Music sources
     MUSICBRAINZ,
     SPOTIFY,
-    HARDCOVER,
-    COMICVINE
+    DISCOGS,
+    LAST_FM,
+    
+    // Audiobook sources
+    AUDIBLE,
+    LIBRIVOX,
+    
+    // General ISBN databases
+    ISBN_DB,
+    WORLD_CAT,
+    
+    // Fanfiction sources (covered in WebFictionService)
+    ARCHIVE_OF_OUR_OWN,
+    FANFICTION_NET,
+    WATTPAD
 }
 
 // Google Books API models
