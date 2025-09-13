@@ -158,6 +158,20 @@ dependencies {
     
     // Audio processing for enhanced TTS (placeholder for future Coqui integration)
     implementation("androidx.media:media:1.7.0")
+    
+    // HTTP client for metadata API calls
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    
+    // Image loading for cover art
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    
+    // File handling and document access
+    implementation("androidx.documentfile:documentfile:1.0.1")
+    
+    // PDF rendering for documents
+    implementation("com.github.barteksc:android-pdf-viewer:3.2.0-beta.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("androidx.test.ext:junit:1.1.5")
