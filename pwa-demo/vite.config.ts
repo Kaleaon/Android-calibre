@@ -62,14 +62,8 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
-    host: true,
-    allowedHosts: [
-      'localhost',
-      '127.0.0.1',
-      'app-revival-22.preview.emergentagent.com',
-      '.emergentagent.com',
-      '.localhost'
-    ]
+    host: '0.0.0.0',
+    allowedHosts: 'all'
   },
   build: {
     outDir: 'dist',
