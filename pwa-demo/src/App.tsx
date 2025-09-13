@@ -1,93 +1,107 @@
-// Main React App component - equivalent to Android MainActivity
+// CleverFerret PWA - Plex-inspired Universal Media Library
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box } from '@mui/material';
 import { LibraryListScreen } from './components/LibraryListScreen';
 import { LibraryDetailsScreen } from './components/LibraryDetailsScreen';
+import { MediaViewerScreen } from './components/MediaViewerScreen';
+import { MetadataEditorScreen } from './components/MetadataEditorScreen';
+import { SettingsScreen } from './components/SettingsScreen';
 
-// Material You inspired theme with enhanced visual hierarchy
-const theme = createTheme({
+// Plex-inspired dark theme
+const plexTheme = createTheme({
   palette: {
-    mode: 'light',
+    mode: 'dark',
     primary: {
-      main: '#6750A4',
-      light: '#EADDFF',
-      dark: '#21005D',
-      contrastText: '#FFFFFF',
+      main: '#e5a00d', // Plex gold/orange
+      light: '#f4b942',
+      dark: '#cc8f00',
+      contrastText: '#000000',
     },
     secondary: {
-      main: '#625B71',
-      light: '#E8DEF8',
-      dark: '#1D192B',
+      main: '#1f2326', // Dark gray for cards
+      light: '#2d3136',
+      dark: '#15181a',
     },
     background: {
-      default: '#FEFBFF',
-      paper: '#FFFBFE',
+      default: '#1a1a1a', // Main background
+      paper: '#1f2326', // Card background
     },
     surface: {
-      main: '#FEF7FF',
+      main: '#282c34',
     },
     text: {
-      primary: '#1D1B20',
-      secondary: '#49454F',
+      primary: '#ffffff',
+      secondary: '#b3b3b3',
+    },
+    info: {
+      main: '#17a2b8',
+    },
+    success: {
+      main: '#28a745',
+    },
+    warning: {
+      main: '#ffc107',
+    },
+    error: {
+      main: '#dc3545',
     },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Open Sans", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: {
+      fontWeight: 300,
+      fontSize: '2.5rem',
+    },
+    h2: {
+      fontWeight: 300,
+      fontSize: '2rem',
+    },
+    h3: {
+      fontWeight: 400,
+      fontSize: '1.75rem',
+    },
     h4: {
-      fontWeight: 600,
-      letterSpacing: '0.25px',
+      fontWeight: 400,
+      fontSize: '1.5rem',
+    },
+    h5: {
+      fontWeight: 500,
+      fontSize: '1.25rem',
     },
     h6: {
-      fontWeight: 600,
-      letterSpacing: '0.15px',
+      fontWeight: 500,
+      fontSize: '1.1rem',
     },
     body1: {
-      letterSpacing: '0.5px',
+      fontSize: '1rem',
+      lineHeight: 1.5,
     },
     body2: {
-      letterSpacing: '0.25px',
+      fontSize: '0.875rem',
+      lineHeight: 1.43,
     },
     button: {
       textTransform: 'none',
-      fontWeight: 600,
-      letterSpacing: '0.1px',
+      fontWeight: 500,
     },
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: 8,
   },
-  shadows: [
-    'none',
-    '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15)',
-    '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)',
-    '0px 1px 3px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15)',
-    '0px 2px 3px rgba(0, 0, 0, 0.3), 0px 6px 10px 4px rgba(0, 0, 0, 0.15)',
-    '0px 4px 4px rgba(0, 0, 0, 0.3), 0px 8px 12px 6px rgba(0, 0, 0, 0.15)',
-    '0px 6px 10px rgba(103, 80, 164, 0.15), 0px 12px 24px rgba(103, 80, 164, 0.1)',
-    '0px 6px 10px rgba(0, 0, 0, 0.3), 0px 20px 25px 5px rgba(0, 0, 0, 0.15)',
-    '0px 8px 25px rgba(0, 0, 0, 0.15), 0px 16px 32px rgba(0, 0, 0, 0.1)',
-    // Continue with standard Material-UI shadows for indices 9-24
-    ...createTheme().shadows.slice(9),
-  ],
   components: {
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          border: 'none',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        },
-      },
-    },
-    MuiFab: {
-      styleOverrides: {
-        root: {
-          borderRadius: 16,
-          boxShadow: '0 8px 24px rgba(103, 80, 164, 0.25)',
+          backgroundColor: '#1f2326',
+          border: '1px solid #2d3136',
+          borderRadius: 8,
+          transition: 'all 0.3s ease',
           '&:hover': {
-            boxShadow: '0 12px 32px rgba(103, 80, 164, 0.35)',
+            transform: 'translateY(-4px)',
+            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.3)',
+            borderColor: '#e5a00d',
           },
         },
       },
@@ -95,32 +109,70 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 20,
+          borderRadius: 6,
           textTransform: 'none',
-          fontWeight: 600,
-          padding: '8px 24px',
+          fontWeight: 500,
+          padding: '8px 16px',
         },
         contained: {
-          boxShadow: '0 4px 16px rgba(103, 80, 164, 0.25)',
+          backgroundColor: '#e5a00d',
+          color: '#000',
           '&:hover': {
-            boxShadow: '0 6px 20px rgba(103, 80, 164, 0.35)',
+            backgroundColor: '#cc8f00',
+          },
+        },
+        outlined: {
+          borderColor: '#e5a00d',
+          color: '#e5a00d',
+          '&:hover': {
+            borderColor: '#f4b942',
+            backgroundColor: 'rgba(229, 160, 13, 0.1)',
           },
         },
       },
     },
-    MuiDialog: {
+    MuiFab: {
       styleOverrides: {
-        paper: {
-          borderRadius: 24,
-          padding: '8px',
+        root: {
+          backgroundColor: '#e5a00d',
+          color: '#000',
+          '&:hover': {
+            backgroundColor: '#f4b942',
+          },
         },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
+          backgroundColor: '#1a1a1a',
+          borderBottom: '1px solid #2d3136',
           boxShadow: 'none',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#1f2326',
+          border: '1px solid #2d3136',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            '& fieldset': {
+              borderColor: '#2d3136',
+            },
+            '&:hover fieldset': {
+              borderColor: '#e5a00d',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#e5a00d',
+            },
+          },
         },
       },
     },
@@ -129,26 +181,20 @@ const theme = createTheme({
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={plexTheme}>
       <CssBaseline />
       <Router>
-        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+        <Box sx={{ 
+          minHeight: '100vh', 
+          bgcolor: 'background.default',
+          color: 'text.primary'
+        }}>
           <Routes>
             <Route path="/" element={<LibraryListScreen />} />
             <Route path="/library/:libraryId" element={<LibraryDetailsScreen />} />
-            <Route path="/book/:bookId" element={
-              <div style={{ padding: '20px', textAlign: 'center' }}>
-                <h2>Book Reader</h2>
-                <p>This would be the e-book reader component using HTML/CSS rendering</p>
-                <p>Similar to Android's epub4j integration</p>
-              </div>
-            } />
-            <Route path="/settings" element={
-              <div style={{ padding: '20px', textAlign: 'center' }}>
-                <h2>Settings</h2>
-                <p>Settings screen with reading preferences, themes, etc.</p>
-              </div>
-            } />
+            <Route path="/media/:mediaId" element={<MediaViewerScreen />} />
+            <Route path="/edit/:mediaId" element={<MetadataEditorScreen />} />
+            <Route path="/settings" element={<SettingsScreen />} />
           </Routes>
         </Box>
       </Router>
