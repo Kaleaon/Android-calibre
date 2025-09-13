@@ -423,36 +423,52 @@ export const LibraryListScreen: React.FC = () => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, minHeight: '100vh' }}>
+      {/* Plex-style header */}
       <AppBar 
         position="static" 
         elevation={0}
         sx={{
-          background: 'linear-gradient(135deg, #6750A4 0%, #7C4DFF 100%)',
-          '& .MuiToolbar-root': {
-            minHeight: { xs: 56, sm: 64 }
-          }
+          bgcolor: 'background.default',
+          borderBottom: '1px solid #2d3136',
         }}
       >
-        <Toolbar>
-          <Typography 
-            variant="h6" 
-            component="div" 
-            sx={{ 
-              flexGrow: 1,
-              fontWeight: 700,
-              fontSize: { xs: '1.2rem', sm: '1.3rem' },
-              letterSpacing: 0.5
-            }}
-          >
-            CleverFerret
-          </Typography>
+        <Toolbar sx={{ py: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mr: 4 }}>
+            <Avatar
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'black',
+                width: 40,
+                height: 40,
+                mr: 2,
+                fontWeight: 700
+              }}
+            >
+              CF
+            </Avatar>
+            <Typography 
+              variant="h5" 
+              component="div" 
+              sx={{ 
+                fontWeight: 300,
+                fontSize: '1.5rem',
+                color: 'text.primary'
+              }}
+            >
+              CleverFerret
+            </Typography>
+          </Box>
+          
+          <Box sx={{ flexGrow: 1 }} />
+          
           <IconButton
             color="inherit"
             onClick={handleMenuOpen}
             sx={{
+              color: 'text.primary',
               '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.1)'
+                bgcolor: 'secondary.main'
               }
             }}
           >
@@ -464,10 +480,12 @@ export const LibraryListScreen: React.FC = () => {
             onClose={handleMenuClose}
             PaperProps={{
               sx: {
+                bgcolor: 'background.paper',
+                border: '1px solid #2d3136',
                 borderRadius: 2,
                 mt: 1,
-                minWidth: 200,
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)'
+                minWidth: 220,
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
               }
             }}
           >
@@ -475,25 +493,28 @@ export const LibraryListScreen: React.FC = () => {
               onClick={handleImportCalibre}
               sx={{ 
                 py: 1.5,
+                px: 2,
                 '&:hover': {
-                  bgcolor: 'primary.light',
-                  color: 'primary.contrastText'
+                  bgcolor: 'secondary.main'
                 }
               }}
             >
-              Import Calibre Library
+              📚 Import Calibre Library
             </MenuItem>
             <MenuItem 
-              onClick={handleMenuClose}
+              onClick={() => {
+                handleMenuClose();
+                navigate('/settings');
+              }}
               sx={{ 
                 py: 1.5,
+                px: 2,
                 '&:hover': {
-                  bgcolor: 'primary.light',
-                  color: 'primary.contrastText'
+                  bgcolor: 'secondary.main'
                 }
               }}
             >
-              Settings
+              ⚙️ Settings
             </MenuItem>
           </Menu>
         </Toolbar>
