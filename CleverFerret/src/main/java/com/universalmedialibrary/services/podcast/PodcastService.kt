@@ -163,6 +163,7 @@ interface TaddyPodcastApi {
     ): TaddySearchResponse
 }
 
+// PodcastIndex.org API responses
 data class PodcastSearchResponse(
     val status: String,
     val feeds: List<PodcastSearchFeed>,
@@ -206,6 +207,103 @@ data class PodcastSearchEpisode(
     val season: Int?,
     val image: String,
     val feedImage: String
+)
+
+// Listen Notes API responses
+data class ListenNotesResponse(
+    val results: List<ListenNotesPodcast>,
+    val count: Int,
+    val total: Int,
+    val next_offset: Int?
+)
+
+data class ListenNotesPodcast(
+    val id: String,
+    val title: String,
+    val publisher: String,
+    val description: String,
+    val image: String,
+    val website: String?,
+    val rss: String,
+    val total_episodes: Int,
+    val explicit_content: Boolean,
+    val language: String,
+    val genres: List<ListenNotesGenre>
+)
+
+data class ListenNotesGenre(
+    val id: Int,
+    val name: String
+)
+
+// iTunes Search API responses
+data class iTunesSearchResponse(
+    val resultCount: Int,
+    val results: List<iTunesPodcast>
+)
+
+data class iTunesPodcast(
+    val trackId: Long,
+    val trackName: String,
+    val artistName: String,
+    val feedUrl: String,
+    val artworkUrl600: String?,
+    val artworkUrl100: String?,
+    val trackCount: Int?,
+    val primaryGenreName: String?,
+    val contentAdvisoryRating: String?,
+    val country: String
+)
+
+// Spotify API responses
+data class SpotifySearchResponse(
+    val shows: SpotifyShowsPage
+)
+
+data class SpotifyShowsPage(
+    val items: List<SpotifyPodcast>,
+    val limit: Int,
+    val offset: Int,
+    val total: Int
+)
+
+data class SpotifyPodcast(
+    val id: String,
+    val name: String,
+    val publisher: String,
+    val description: String,
+    val images: List<SpotifyImage>,
+    val external_urls: SpotifyExternalUrls,
+    val total_episodes: Int,
+    val explicit: Boolean,
+    val languages: List<String>
+)
+
+data class SpotifyImage(
+    val url: String,
+    val height: Int?,
+    val width: Int?
+)
+
+data class SpotifyExternalUrls(
+    val spotify: String
+)
+
+// Taddy API responses
+data class TaddySearchResponse(
+    val results: List<TaddyPodcast>,
+    val count: Int
+)
+
+data class TaddyPodcast(
+    val uuid: String,
+    val name: String,
+    val author: String,
+    val description: String,
+    val imageUrl: String,
+    val feedUrl: String,
+    val episodeCount: Int,
+    val categories: List<String>
 )
 
 @Singleton
