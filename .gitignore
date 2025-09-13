@@ -30,3 +30,7 @@ pwa-demo/.vite/
 pwa-demo/npm-debug.log*
 pwa-demo/yarn-debug.log*
 pwa-demo/yarn-error.log*
+-e 
+# Environment files
+*.env
+*.env.*
