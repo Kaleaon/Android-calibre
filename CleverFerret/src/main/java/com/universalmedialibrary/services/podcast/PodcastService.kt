@@ -321,6 +321,42 @@ class PodcastService @Inject constructor(
             .build()
             .create(PodcastIndexApi::class.java)
     }
+    
+    private val listenNotesApi: ListenNotesApi by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://listen-api.listennotes.com/api/v2/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
+            .build()
+            .create(ListenNotesApi::class.java)
+    }
+    
+    private val iTunesSearchApi: iTunesSearchApi by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://itunes.apple.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
+            .build()
+            .create(iTunesSearchApi::class.java)
+    }
+    
+    private val spotifyApi: SpotifyPodcastApi by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.spotify.com/v1/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
+            .build()
+            .create(SpotifyPodcastApi::class.java)
+    }
+    
+    private val taddyApi: TaddyPodcastApi by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.taddy.org/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
+            .build()
+            .create(TaddyPodcastApi::class.java)
+    }
 
     /**
      * Search for podcasts using Podcast Index API
