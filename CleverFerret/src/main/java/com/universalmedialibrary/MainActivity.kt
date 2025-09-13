@@ -506,39 +506,88 @@ fun AddLibraryDialog(onDismiss: () -> Unit, onAdd: (String) -> Unit) {
 
 @Composable
 fun LibraryCard(library: Library, onClick: () -> Unit) {
+    val backgroundColor = when (library.type.uppercase()) {
+        "BOOK" -> listOf(Color(0xFF2C5F2D), Color(0xFF97BC62))
+        "MOVIE" -> listOf(Color(0xFF1565C0), Color(0xFF42A5F5))
+        "MUSIC" -> listOf(Color(0xFF7B1FA2), Color(0xFF BA68C8))
+        else -> listOf(Color(0xFF455A64), Color(0xFF90A4AE))
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .height(280.dp)
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = getIconForLibraryType(library.type),
-                contentDescription = library.type,
-                modifier = Modifier.size(56.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = library.name,
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = library.type.lowercase().replaceFirstChar { it.uppercase() },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-            )
+        Column {
+            // Gradient header section
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.linearGradient(backgroundColor)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = getIconForLibraryType(library.type),
+                    contentDescription = library.type,
+                    modifier = Modifier.size(64.dp),
+                    tint = Color.White
+                )
+                
+                // Mock item count chip
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.Black.copy(alpha = 0.6f)
+                        )
+                    ) {
+                        Text(
+                            text = "${(50..500).random()} items",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+            
+            // Content section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = library.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${library.type.lowercase().replaceFirstChar { it.uppercase() }} Library",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Updated ${(1..7).random()} days ago",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
         }
     }
 }
