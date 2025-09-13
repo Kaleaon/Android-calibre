@@ -42,32 +42,38 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/app-store';
 import { Library } from '../types';
 
+// Plex-inspired library card component
 const LibraryCard: React.FC<{
   library: Library;
   onClick: () => void;
 }> = ({ library, onClick }) => {
-  // Mock data for demonstration - in real app this would come from the database
+  // Mock data for demonstration
   const mockStats = {
     itemCount: Math.floor(Math.random() * 500) + 10,
     lastSync: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-    isRecent: Math.random() > 0.7
+    recentlyAdded: Math.floor(Math.random() * 20),
+    isActive: Math.random() > 0.3
   };
 
   const getIcon = () => {
     switch (library.type) {
-      case 'BOOK': return <BookIcon sx={{ fontSize: 48 }} />;
-      case 'MOVIE': return <MovieIcon sx={{ fontSize: 48 }} />;
-      case 'MUSIC': return <MusicIcon sx={{ fontSize: 48 }} />;
-      default: return <DocumentIcon sx={{ fontSize: 48 }} />;
+      case 'BOOK': return <BookIcon sx={{ fontSize: 40, color: '#ffffff' }} />;
+      case 'MOVIE': return <VideoIcon sx={{ fontSize: 40, color: '#ffffff' }} />;
+      case 'MUSIC': return <LibraryMusicIcon sx={{ fontSize: 40, color: '#ffffff' }} />;
+      case 'PODCAST': return <PodcastIcon sx={{ fontSize: 40, color: '#ffffff' }} />;
+      case 'MAGAZINE': return <MagazineIcon sx={{ fontSize: 40, color: '#ffffff' }} />;
+      default: return <CollectionsIcon sx={{ fontSize: 40, color: '#ffffff' }} />;
     }
   };
 
-  const getGradientColor = () => {
+  const getBackgroundColor = () => {
     switch (library.type) {
-      case 'BOOK': return 'linear-gradient(135deg, #6750A4 0%, #7C4DFF 100%)';
-      case 'MOVIE': return 'linear-gradient(135deg, #1976D2 0%, #42A5F5 100%)';
-      case 'MUSIC': return 'linear-gradient(135deg, #388E3C 0%, #66BB6A 100%)';
-      default: return 'linear-gradient(135deg, #F57C00 0%, #FFB74D 100%)';
+      case 'BOOK': return 'linear-gradient(135deg, #2C5F2D 0%, #97BC62 100%)';
+      case 'MOVIE': return 'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)';
+      case 'MUSIC': return 'linear-gradient(135deg, #7B1FA2 0%, #BA68C8 100%)';
+      case 'PODCAST': return 'linear-gradient(135deg, #EF6C00 0%, #FFB74D 100%)';
+      case 'MAGAZINE': return 'linear-gradient(135deg, #D32F2F 0%, #F48FB1 100%)';
+      default: return 'linear-gradient(135deg, #455A64 0%, #90A4AE 100%)';
     }
   };
 
@@ -76,68 +82,125 @@ const LibraryCard: React.FC<{
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 1) return 'Today';
-    if (diffDays <= 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
+    if (diffDays === 1) return 'Updated today';
+    if (diffDays <= 7) return `Updated ${diffDays} days ago`;
+    return `Updated ${date.toLocaleDateString()}`;
   };
 
   return (
     <Card
       sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        height: 280,
         cursor: 'pointer',
         position: 'relative',
         overflow: 'hidden',
-        transition: 'all 0.3s ease-in-out',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        bgcolor: 'secondary.main',
+        border: '1px solid #2d3136',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 8px 25px rgba(103, 80, 164, 0.15)',
+          transform: 'translateY(-8px) scale(1.02)',
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)',
+          borderColor: 'primary.main',
+          '& .library-overlay': {
+            opacity: 1,
+          }
         }
       }}
       onClick={onClick}
     >
-      {/* Header with gradient background */}
+      {/* Background Header */}
       <Box
         sx={{
-          background: getGradientColor(),
-          height: 80,
+          height: 160,
+          background: getBackgroundColor(),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          position: 'relative'
+          position: 'relative',
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '40px',
+            background: 'linear-gradient(transparent, rgba(31, 35, 38, 0.8))',
+          }
         }}
       >
-        <Box sx={{ color: 'white' }}>
-          {getIcon()}
-        </Box>
-        {mockStats.isRecent && (
+        {getIcon()}
+        
+        {/* Status indicator */}
+        {mockStats.isActive && (
           <Box
             sx={{
               position: 'absolute',
-              top: 8,
-              right: 8,
-              width: 8,
-              height: 8,
+              top: 12,
+              right: 12,
+              width: 12,
+              height: 12,
               borderRadius: '50%',
-              bgcolor: '#4CAF50',
-              border: '2px solid white'
+              bgcolor: 'primary.main',
+              boxShadow: '0 0 0 3px rgba(229, 160, 13, 0.3)',
             }}
           />
         )}
+
+        {/* Recently added badge */}
+        {mockStats.recentlyAdded > 0 && (
+          <Chip
+            label={`+${mockStats.recentlyAdded}`}
+            size="small"
+            sx={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              bgcolor: 'primary.main',
+              color: 'black',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+            }}
+          />
+        )}
+
+        {/* Hover overlay */}
+        <Box
+          className="library-overlay"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            bgcolor: 'rgba(0, 0, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0,
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              color: 'white',
+              fontWeight: 600,
+              textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)',
+            }}
+          >
+            Open Library
+          </Typography>
+        </Box>
       </Box>
 
-      <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+      {/* Content */}
+      <CardContent sx={{ p: 2, height: 120, display: 'flex', flexDirection: 'column' }}>
         <Typography 
           variant="h6" 
-          component="h2" 
-          gutterBottom
           sx={{ 
             fontWeight: 600,
             fontSize: '1.1rem',
-            lineHeight: 1.3,
-            mb: 1
+            mb: 0.5,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
           }}
         >
           {library.name}
@@ -146,26 +209,24 @@ const LibraryCard: React.FC<{
         <Typography 
           variant="body2" 
           color="text.secondary"
-          sx={{ mb: 2, textTransform: 'capitalize' }}
+          sx={{ 
+            mb: 1.5, 
+            textTransform: 'capitalize',
+            fontSize: '0.875rem'
+          }}
         >
           {library.type.toLowerCase()} library
         </Typography>
 
         {/* Stats */}
         <Box sx={{ mt: 'auto' }}>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              mb: 1
-            }}
-          >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography 
               variant="body2" 
               sx={{ 
                 fontWeight: 600,
-                color: 'primary.main'
+                color: 'primary.main',
+                fontSize: '0.875rem'
               }}
             >
               {mockStats.itemCount.toLocaleString()} items
@@ -175,29 +236,17 @@ const LibraryCard: React.FC<{
               color="text.secondary"
               sx={{ fontSize: '0.75rem' }}
             >
-              {formatLastSync(mockStats.lastSync)}
+              {mockStats.recentlyAdded} new
             </Typography>
           </Box>
           
-          {/* Progress bar for visual interest */}
-          <Box
-            sx={{
-              width: '100%',
-              height: 3,
-              bgcolor: 'grey.200',
-              borderRadius: 1,
-              overflow: 'hidden'
-            }}
+          <Typography 
+            variant="caption" 
+            color="text.secondary"
+            sx={{ fontSize: '0.7rem', opacity: 0.8 }}
           >
-            <Box
-              sx={{
-                width: `${Math.min((mockStats.itemCount / 1000) * 100, 100)}%`,
-                height: '100%',
-                background: getGradientColor(),
-                borderRadius: 1
-              }}
-            />
-          </Box>
+            {formatLastSync(mockStats.lastSync)}
+          </Typography>
         </Box>
       </CardContent>
     </Card>
