@@ -199,9 +199,169 @@ const HomeScreen: React.FC = () => {
   );
 };
 
-// Library details component
+// Media item component with realistic data
+const MediaItem: React.FC<{ item: any; onClick: () => void }> = ({ item, onClick }) => {
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+
+  return (
+    <Card 
+      sx={{ 
+        height: 350,
+        cursor: 'pointer',
+        position: 'relative',
+        '&:hover .media-overlay': {
+          opacity: 1,
+        },
+      }}
+      onClick={onClick}
+    >
+      <Box
+        sx={{
+          height: 220,
+          bgcolor: 'secondary.main',
+          backgroundImage: item.poster ? `url(${item.poster})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+        }}
+      >
+        {!item.poster && <CollectionsIcon sx={{ fontSize: 50, color: 'primary.main' }} />}
+        
+        {/* Rating badge */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            bgcolor: 'rgba(0, 0, 0, 0.8)',
+            borderRadius: 1,
+            px: 1,
+            py: 0.5,
+          }}
+        >
+          <Typography variant="caption" sx={{ color: 'primary.main', fontWeight: 600 }}>
+            ⭐ {item.rating}
+          </Typography>
+        </Box>
+
+        {/* Hover overlay */}
+        <Box
+          className="media-overlay"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            bgcolor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0,
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          <Button
+            variant="contained"
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'black',
+              fontWeight: 600,
+            }}
+          >
+            {item.type === 'BOOK' ? '📖 Read' : item.type === 'MOVIE' ? '▶️ Watch' : '🎵 Play'}
+          </Button>
+        </Box>
+      </Box>
+
+      <CardContent sx={{ p: 2 }}>
+        <Typography variant="h6" sx={{ fontSize: '0.95rem', fontWeight: 600, mb: 1 }}>
+          {item.title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          {item.author} • {item.year}
+        </Typography>
+        <Chip 
+          label={item.genre} 
+          size="small" 
+          sx={{ 
+            fontSize: '0.7rem',
+            bgcolor: 'rgba(229, 160, 13, 0.2)',
+            color: 'primary.main',
+          }} 
+        />
+      </CardContent>
+    </Card>
+  );
+};
+
+// Library details component with realistic media
 const LibraryScreen: React.FC = () => {
   const navigate = useNavigate();
+
+  // Generate realistic demo media items
+  const demoItems = [
+    {
+      id: 1,
+      title: 'The Digital Frontier',
+      author: 'Sarah Chen',
+      year: 2024,
+      rating: 4.5,
+      genre: 'Sci-Fi',
+      type: 'BOOK',
+      poster: 'https://via.placeholder.com/300x450/2C5F2D/ffffff?text=📚+Digital+Frontier',
+    },
+    {
+      id: 2,
+      title: 'Cyber Dreams',
+      author: 'Michael Rodriguez',
+      year: 2023,
+      rating: 4.8,
+      genre: 'Thriller',
+      type: 'MOVIE',
+      poster: 'https://via.placeholder.com/300x450/1565C0/ffffff?text=🎬+Cyber+Dreams',
+    },
+    {
+      id: 3,
+      title: 'Neon Nights',
+      author: 'Synthwave Collective',
+      year: 2024,
+      rating: 4.2,
+      genre: 'Electronic',
+      type: 'MUSIC',
+      poster: 'https://via.placeholder.com/300x450/7B1FA2/ffffff?text=🎵+Neon+Nights',
+    },
+    {
+      id: 4,
+      title: 'AI Revolution',
+      author: 'Dr. Emily Zhang',
+      year: 2024,
+      rating: 4.6,
+      genre: 'Non-Fiction',
+      type: 'BOOK',
+      poster: 'https://via.placeholder.com/300x450/2C5F2D/ffffff?text=📚+AI+Revolution',
+    },
+    {
+      id: 5,
+      title: 'Matrix Reborn',
+      author: 'James Cameron',
+      year: 2025,
+      rating: 4.9,
+      genre: 'Action',
+      type: 'MOVIE',
+      poster: 'https://via.placeholder.com/300x450/1565C0/ffffff?text=🎬+Matrix+Reborn',
+    },
+    {
+      id: 6,
+      title: 'Future Bass',
+      author: 'Digital Dreams',
+      year: 2024,
+      rating: 4.3,
+      genre: 'EDM',
+      type: 'MUSIC',
+      poster: 'https://via.placeholder.com/300x450/7B1FA2/ffffff?text=🎵+Future+Bass',
+    },
+  ];
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
@@ -217,34 +377,20 @@ const LibraryScreen: React.FC = () => {
       </AppBar>
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 300, mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 300, mb: 1 }}>
           Demo Library
         </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          {demoItems.length} items • Mixed media
+        </Typography>
         
-        <Grid container spacing={2}>
-          {[1, 2, 3, 4, 5, 6].map((item) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={item}>
-              <Card sx={{ height: 300 }}>
-                <Box
-                  sx={{
-                    height: 200,
-                    bgcolor: 'secondary.main',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CollectionsIcon sx={{ fontSize: 50, color: 'primary.main' }} />
-                </Box>
-                <CardContent>
-                  <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                    Demo Item {item}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Demo Author
-                  </Typography>
-                </CardContent>
-              </Card>
+        <Grid container spacing={3}>
+          {demoItems.map((item) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
+              <MediaItem
+                item={item}
+                onClick={() => alert(`Opening ${item.title} - ${item.type} viewer would load here`)}
+              />
             </Grid>
           ))}
         </Grid>
