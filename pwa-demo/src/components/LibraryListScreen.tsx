@@ -271,6 +271,15 @@ const AddLibraryDialog: React.FC<{
     }
   };
 
+  const mediaTypes = [
+    { value: 'BOOK', label: 'Books', icon: '📚' },
+    { value: 'MOVIE', label: 'Movies & TV', icon: '🎬' },
+    { value: 'MUSIC', label: 'Music', icon: '🎵' },
+    { value: 'PODCAST', label: 'Podcasts', icon: '🎙️' },
+    { value: 'MAGAZINE', label: 'Magazines', icon: '📰' },
+    { value: 'DOCUMENT', label: 'Documents', icon: '📄' },
+  ] as const;
+
   return (
     <Dialog 
       open={open} 
@@ -279,21 +288,25 @@ const AddLibraryDialog: React.FC<{
       fullWidth
       PaperProps={{
         sx: {
+          bgcolor: 'background.paper',
           borderRadius: 3,
-          boxShadow: '0 24px 48px rgba(0, 0, 0, 0.15)'
+          border: '1px solid #2d3136',
+          boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)'
         }
       }}
     >
       <DialogTitle 
         sx={{
-          pb: 1,
-          fontSize: '1.25rem',
-          fontWeight: 600
+          pb: 2,
+          fontSize: '1.5rem',
+          fontWeight: 300,
+          color: 'text.primary',
+          borderBottom: '1px solid #2d3136'
         }}
       >
         Add New Library
       </DialogTitle>
-      <DialogContent sx={{ pb: 2 }}>
+      <DialogContent sx={{ pt: 3, pb: 2 }}>
         <TextField
           autoFocus
           margin="normal"
@@ -302,7 +315,7 @@ const AddLibraryDialog: React.FC<{
           variant="outlined"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., My Books, Audiobooks, Comics"
+          placeholder="e.g., My Books, Action Movies, Jazz Collection"
           sx={{ 
             mb: 3,
             '& .MuiOutlinedInput-root': {
@@ -325,12 +338,14 @@ const AddLibraryDialog: React.FC<{
             },
           }}
         >
-          <MenuItem value="BOOK">📚 Books</MenuItem>
-          <MenuItem value="MOVIE">🎬 Movies</MenuItem>
-          <MenuItem value="MUSIC">🎵 Music</MenuItem>
-          <MenuItem value="PODCAST">🎙️ Podcasts</MenuItem>
-          <MenuItem value="MAGAZINE">📰 Magazines</MenuItem>
-          <MenuItem value="DOCUMENT">📄 Documents</MenuItem>
+          {mediaTypes.map((mediaType) => (
+            <MenuItem key={mediaType.value} value={mediaType.value}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <span>{mediaType.icon}</span>
+                <span>{mediaType.label}</span>
+              </Box>
+            </MenuItem>
+          ))}
         </TextField>
         <TextField
           margin="normal"
@@ -340,7 +355,7 @@ const AddLibraryDialog: React.FC<{
           value={path}
           onChange={(e) => setPath(e.target.value)}
           placeholder="/path/to/library"
-          helperText="Optional path to your media files"
+          helperText="Optional path to your media files on disk"
           sx={{ 
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
@@ -348,14 +363,19 @@ const AddLibraryDialog: React.FC<{
           }}
         />
       </DialogContent>
-      <DialogActions sx={{ p: 3, pt: 1 }}>
+      <DialogActions sx={{ p: 3, pt: 2, gap: 2 }}>
         <Button 
           onClick={onClose}
+          variant="outlined"
           sx={{
-            textTransform: 'none',
-            fontWeight: 600,
             borderRadius: 2,
-            px: 3
+            px: 3,
+            borderColor: '#2d3136',
+            color: 'text.secondary',
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: 'rgba(229, 160, 13, 0.1)'
+            }
           }}
         >
           Cancel
@@ -365,16 +385,17 @@ const AddLibraryDialog: React.FC<{
           variant="contained" 
           disabled={!name.trim()}
           sx={{
-            textTransform: 'none',
-            fontWeight: 600,
             borderRadius: 2,
             px: 3,
-            background: 'linear-gradient(135deg, #6750A4 0%, #7C4DFF 100%)',
+            bgcolor: 'primary.main',
+            color: 'black',
+            fontWeight: 500,
             '&:hover': {
-              background: 'linear-gradient(135deg, #5A47A0 0%, #7043F5 100%)',
+              bgcolor: 'primary.light',
             },
             '&:disabled': {
-              background: 'rgba(0, 0, 0, 0.12)',
+              bgcolor: 'rgba(255, 255, 255, 0.12)',
+              color: 'rgba(255, 255, 255, 0.3)',
             }
           }}
         >
