@@ -49,6 +49,7 @@ import com.universalmedialibrary.ui.settings.ReaderSettingsScreen
 import com.universalmedialibrary.ui.settings.SecuritySettingsScreen
 import com.universalmedialibrary.ui.settings.AboutScreen
 import com.universalmedialibrary.ui.metadata.MetadataEditorScreen
+import com.universalmedialibrary.ui.theme.PlexTheme
 import kotlin.math.absoluteValue
 import android.content.Intent
 import android.net.Uri
