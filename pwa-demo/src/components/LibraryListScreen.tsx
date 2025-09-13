@@ -1,10 +1,9 @@
-// React component equivalent to Android LibraryListScreen
+// Plex-inspired Library List Screen
 import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
   CardContent,
-  CardActions,
   Typography,
   Grid,
   Fab,
@@ -20,7 +19,10 @@ import {
   Menu,
   MenuItem,
   CircularProgress,
-  Backdrop
+  Backdrop,
+  Paper,
+  Avatar,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -28,7 +30,13 @@ import {
   Book as BookIcon,
   Movie as MovieIcon,
   MusicNote as MusicIcon,
-  Description as DocumentIcon
+  Description as DocumentIcon,
+  Podcast as PodcastIcon,
+  Article as MagazineIcon,
+  VideoLibrary as VideoIcon,
+  LibraryMusic as LibraryMusicIcon,
+  Collections as CollectionsIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/app-store';
