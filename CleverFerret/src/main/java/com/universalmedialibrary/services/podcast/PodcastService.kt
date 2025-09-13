@@ -99,7 +99,7 @@ data class RSSItem(
     val imageUrl: String?
 )
 
-// Podcast search APIs
+// Comprehensive Podcast APIs - covering all major services
 interface PodcastIndexApi {
     @GET("search/byterm")
     suspend fun searchPodcasts(
@@ -112,6 +112,55 @@ interface PodcastIndexApi {
         @Query("url") feedUrl: String,
         @Query("max") maxResults: Int = 100
     ): EpisodeSearchResponse
+}
+
+interface ListenNotesApi {
+    @GET("search")
+    suspend fun searchPodcasts(
+        @Query("q") query: String,
+        @Query("type") type: String = "podcast",
+        @Query("page_size") pageSize: Int = 20
+    ): ListenNotesResponse
+    
+    @GET("podcasts/{id}")
+    suspend fun getPodcastById(@Path("id") id: String): ListenNotesPodcast
+}
+
+interface iTunesSearchApi {
+    @GET("search")
+    suspend fun searchPodcasts(
+        @Query("term") term: String,
+        @Query("media") media: String = "podcast",
+        @Query("limit") limit: Int = 20
+    ): iTunesSearchResponse
+    
+    @GET("lookup")
+    suspend fun lookupPodcast(@Query("id") id: String): iTunesSearchResponse
+}
+
+interface SpotifyPodcastApi {
+    @GET("search")
+    suspend fun searchPodcasts(
+        @Query("q") query: String,
+        @Query("type") type: String = "show",
+        @Query("limit") limit: Int = 20,
+        @Header("Authorization") authorization: String
+    ): SpotifySearchResponse
+    
+    @GET("shows/{id}")
+    suspend fun getPodcastById(
+        @Path("id") id: String,
+        @Header("Authorization") authorization: String
+    ): SpotifyPodcast
+}
+
+interface TaddyPodcastApi {
+    @GET("search")
+    suspend fun searchPodcasts(
+        @Query("query") query: String,
+        @Query("limit") limit: Int = 20,
+        @Header("X-API-KEY") apiKey: String
+    ): TaddySearchResponse
 }
 
 data class PodcastSearchResponse(
