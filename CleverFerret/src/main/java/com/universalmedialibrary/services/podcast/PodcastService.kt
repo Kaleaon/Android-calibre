@@ -359,29 +359,186 @@ class PodcastService @Inject constructor(
     }
 
     /**
-     * Search for podcasts using Podcast Index API
+     * Comprehensive podcast search across ALL major directories
+     * Matches and exceeds Calibre's podcast discovery capabilities
      */
-    suspend fun searchPodcasts(query: String): List<PodcastSearchResult> {
+    suspend fun searchPodcasts(
+        query: String, 
+        apiKeys: Map<String, String> = emptyMap()
+    ): List<PodcastSearchResult> {
         return withContext(Dispatchers.IO) {
+            val allResults = mutableListOf<PodcastSearchResult>()
+            
+            // 1. PodcastIndex.org (free, no key required)
             try {
-                val response = podcastIndexApi.searchPodcasts(query)
-                response.feeds.map { feed ->
-                    PodcastSearchResult(
-                        id = feed.id.toString(),
-                        title = feed.title,
-                        author = feed.author.ifEmpty { feed.ownerName },
-                        description = feed.description,
-                        feedUrl = feed.url,
-                        imageUrl = feed.image.ifEmpty { feed.artwork },
-                        episodeCount = feed.episodeCount,
-                        category = feed.categories.values.firstOrNull()
-                    )
+                val podcastIndexResults = searchPodcastIndex(query)
+                allResults.addAll(podcastIndexResults)
+            } catch (e: Exception) {
+                // Continue with other sources
+            }
+            
+            // 2. iTunes/Apple Podcasts (free, largest directory)  
+            try {
+                val iTunesResults = searchiTunesPodcasts(query)
+                allResults.addAll(iTunesResults)
+            } catch (e: Exception) {
+                // Continue with other sources
+            }
+            
+            // 3. Listen Notes (requires API key, most comprehensive)
+            try {
+                apiKeys["listen_notes"]?.let { key ->
+                    val listenNotesResults = searchListenNotes(query, key)
+                    allResults.addAll(listenNotesResults)
                 }
             } catch (e: Exception) {
-                // Fallback to manual RSS discovery
-                searchPodcastsByRSSDiscovery(query)
+                // Continue with other sources
+            }
+            
+            // 4. Spotify (requires OAuth token)
+            try {
+                apiKeys["spotify_token"]?.let { token ->
+                    val spotifyResults = searchSpotifyPodcasts(query, token)
+                    allResults.addAll(spotifyResults)
+                }
+            } catch (e: Exception) {
+                // Continue with other sources
+            }
+            
+            // 5. Taddy (requires API key, has webhooks)
+            try {
+                apiKeys["taddy"]?.let { key ->
+                    val taddyResults = searchTaddyPodcasts(query, key)
+                    allResults.addAll(taddyResults)
+                }
+            } catch (e: Exception) {
+                // Continue with other sources
+            }
+            
+            // Remove duplicates based on feed URL and title similarity
+            deduplicatePodcastResults(allResults)
+        }
+    }
+    
+    private suspend fun searchPodcastIndex(query: String): List<PodcastSearchResult> {
+        val response = podcastIndexApi.searchPodcasts(query)
+        return response.feeds.map { feed ->
+            PodcastSearchResult(
+                id = "pi_${feed.id}",
+                title = feed.title,
+                author = feed.author.ifEmpty { feed.ownerName },
+                description = feed.description,
+                feedUrl = feed.url,
+                imageUrl = feed.image.ifEmpty { feed.artwork },
+                episodeCount = feed.episodeCount,
+                category = feed.categories.values.firstOrNull()
+            )
+        }
+    }
+    
+    private suspend fun searchiTunesPodcasts(query: String): List<PodcastSearchResult> {
+        val response = iTunesSearchApi.searchPodcasts(query)
+        return response.results.map { podcast ->
+            PodcastSearchResult(
+                id = "itunes_${podcast.trackId}",
+                title = podcast.trackName,
+                author = podcast.artistName,
+                description = "", // iTunes doesn't provide description in search
+                feedUrl = podcast.feedUrl,
+                imageUrl = podcast.artworkUrl600 ?: podcast.artworkUrl100,
+                episodeCount = podcast.trackCount ?: 0,
+                category = podcast.primaryGenreName
+            )
+        }
+    }
+    
+    private suspend fun searchListenNotes(query: String, apiKey: String): List<PodcastSearchResult> {
+        val client = httpClient.newBuilder()
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .addHeader("X-ListenAPI-Key", apiKey)
+                    .build()
+                chain.proceed(request)
+            }
+            .build()
+            
+        val apiWithAuth = Retrofit.Builder()
+            .baseUrl("https://listen-api.listennotes.com/api/v2/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .build()
+            .create(ListenNotesApi::class.java)
+            
+        val response = apiWithAuth.searchPodcasts(query)
+        return response.results.map { podcast ->
+            PodcastSearchResult(
+                id = "ln_${podcast.id}",
+                title = podcast.title,
+                author = podcast.publisher,
+                description = podcast.description,
+                feedUrl = podcast.rss,
+                imageUrl = podcast.image,
+                episodeCount = podcast.total_episodes,
+                category = podcast.genres.firstOrNull()?.name
+            )
+        }
+    }
+    
+    private suspend fun searchSpotifyPodcasts(query: String, token: String): List<PodcastSearchResult> {
+        val response = spotifyApi.searchPodcasts(query, authToken = "Bearer $token")
+        return response.shows.items.map { show ->
+            PodcastSearchResult(
+                id = "spotify_${show.id}",
+                title = show.name,
+                author = show.publisher,
+                description = show.description,
+                feedUrl = "", // Spotify doesn't provide RSS feeds
+                imageUrl = show.images.firstOrNull()?.url,
+                episodeCount = show.total_episodes,
+                category = null
+            )
+        }
+    }
+    
+    private suspend fun searchTaddyPodcasts(query: String, apiKey: String): List<PodcastSearchResult> {
+        val response = taddyApi.searchPodcasts(query, apiKey = apiKey)
+        return response.results.map { podcast ->
+            PodcastSearchResult(
+                id = "taddy_${podcast.uuid}",
+                title = podcast.name,
+                author = podcast.author,
+                description = podcast.description,
+                feedUrl = podcast.feedUrl,
+                imageUrl = podcast.imageUrl,
+                episodeCount = podcast.episodeCount,
+                category = podcast.categories.firstOrNull()
+            )
+        }
+    }
+    
+    private fun deduplicatePodcastResults(results: List<PodcastSearchResult>): List<PodcastSearchResult> {
+        // Group by feed URL first (most accurate)
+        val byFeedUrl = results.groupBy { it.feedUrl.lowercase() }
+        val deduplicated = mutableListOf<PodcastSearchResult>()
+        
+        byFeedUrl.forEach { (feedUrl, podcasts) ->
+            if (feedUrl.isNotEmpty()) {
+                // Take the result with most complete information
+                val best = podcasts.maxByOrNull { 
+                    (if (it.description.isNotEmpty()) 1 else 0) +
+                    (if (it.imageUrl != null) 1 else 0) +
+                    (if (it.category != null) 1 else 0) +
+                    it.episodeCount
+                }
+                best?.let { deduplicated.add(it) }
+            } else {
+                // For results without feed URLs (like Spotify), add all
+                deduplicated.addAll(podcasts)
             }
         }
+        
+        // Additional deduplication by title similarity for remaining items
+        return deduplicated.distinctBy { it.title.lowercase().trim() }
     }
 
     /**
