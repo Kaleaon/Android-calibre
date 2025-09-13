@@ -25,4 +25,16 @@ object ServicesModule {
     fun provideMetadataApiService(): MetadataApiService {
         return MetadataApiService()
     }
+
+    @Provides
+    @Singleton
+    fun provideWebFictionService(): com.universalmedialibrary.services.webfiction.WebFictionService {
+        return com.universalmedialibrary.services.webfiction.WebFictionService()
+    }
+
+    @Provides
+    @Singleton
+    fun providePodcastService(@ApplicationContext context: Context): com.universalmedialibrary.services.podcast.PodcastService {
+        return com.universalmedialibrary.services.podcast.PodcastService(context)
+    }
 }
