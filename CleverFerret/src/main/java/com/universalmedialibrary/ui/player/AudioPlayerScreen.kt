@@ -82,6 +82,305 @@ fun AudioPlayerScreen(
                         containerColor = Color.Transparent
                     )
                 )
+
+                // Main content
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Album Art
+                    Card(
+                        modifier = Modifier.size(280.dp),
+                        shape = MaterialTheme.shapes.large,
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    ) {
+                        AsyncImage(
+                            model = "https://via.placeholder.com/280x280/7B1FA2/ffffff?text=♪",
+                            contentDescription = "Album Art",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Track info
+                    Text(
+                        text = uiState.title,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = uiState.artist ?: "Unknown Artist",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Text(
+                        text = uiState.album ?: "Unknown Album",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Progress bar
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Slider(
+                            value = uiState.currentPosition.toFloat(),
+                            onValueChange = { 
+                                viewModel.seekTo(it.toLong())
+                            },
+                            valueRange = 0f..uiState.duration.toFloat(),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                            )
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = formatTime(uiState.currentPosition),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = formatTime(uiState.duration),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Control buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Shuffle
+                        IconButton(
+                            onClick = { /* Shuffle toggle */ },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Shuffle,
+                                contentDescription = "Shuffle",
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Previous
+                        IconButton(
+                            onClick = { /* Previous track */ },
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.SkipPrevious,
+                                contentDescription = "Previous",
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+
+                        // Play/Pause
+                        Card(
+                            modifier = Modifier.size(72.dp),
+                            shape = CircleShape,
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            IconButton(
+                                onClick = { viewModel.togglePlayPause() },
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Icon(
+                                    imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                    contentDescription = if (uiState.isPlaying) "Pause" else "Play",
+                                    modifier = Modifier.size(36.dp),
+                                    tint = Color.Black
+                                )
+                            }
+                        }
+
+                        // Next
+                        IconButton(
+                            onClick = { /* Next track */ },
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.SkipNext,
+                                contentDescription = "Next",
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+
+                        // Repeat
+                        IconButton(
+                            onClick = { /* Repeat toggle */ },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Repeat,
+                                contentDescription = "Repeat",
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Secondary controls
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Favorite
+                        IconButton(onClick = { isFavorite = !isFavorite }) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Favorite",
+                                tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Volume control
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f).padding(horizontal = 16.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.VolumeDown,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Slider(
+                                value = volume,
+                                onValueChange = { volume = it },
+                                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                                colors = SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                    inactiveTrackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                                )
+                            )
+                            Icon(
+                                Icons.Default.VolumeUp,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Queue
+                        IconButton(onClick = { /* Show queue */ }) {
+                            Icon(
+                                Icons.Default.QueueMusic,
+                                contentDescription = "Queue",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Error handling
+            if (uiState.error != null) {
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Default.Error,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Playback Error",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = uiState.error ?: "Unknown error",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = onBack) {
+                            Text("Go Back")
+                        }
+                    }
+                }
+            }
+
+            // Loading indicator
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Loading audio...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun formatTime(milliseconds: Long): String {
+    val seconds = milliseconds / 1000
+    val minutes = seconds / 60
+    val remainingSeconds = seconds % 60
+    return String.format(Locale.getDefault(), "%d:%02d", minutes, remainingSeconds)
+}
         }
     ) { paddingValues ->
         Column(
