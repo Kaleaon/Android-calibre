@@ -172,6 +172,12 @@ dependencies {
     
     // PDF rendering for documents
     implementation("com.github.barteksc:android-pdf-viewer:3.2.0-beta.1")
+    
+    // HTML/XML parsing for web scraping
+    implementation("org.jsoup:jsoup:1.17.2")
+    
+    // Date parsing
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("androidx.test.ext:junit:1.1.5")
