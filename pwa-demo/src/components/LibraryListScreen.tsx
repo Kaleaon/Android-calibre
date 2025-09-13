@@ -520,62 +520,66 @@ export const LibraryListScreen: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ p: 3 }}>
+      {/* Main content area */}
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
         {isLoading ? (
-          <Box display="flex" justifyContent="center" mt={4}>
-            <CircularProgress />
+          <Box display="flex" justifyContent="center" alignItems="center" sx={{ minHeight: '60vh' }}>
+            <CircularProgress sx={{ color: 'primary.main' }} />
           </Box>
         ) : libraries.length === 0 ? (
           <Box 
-            textAlign="center" 
-            mt={6}
             sx={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              maxWidth: 400,
+              justifyContent: 'center',
+              minHeight: '60vh',
+              textAlign: 'center',
+              maxWidth: 500,
               mx: 'auto',
               px: 3
             }}
           >
-            <Box
+            <Paper
               sx={{
                 width: 120,
                 height: 120,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #6750A4 0%, #7C4DFF 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                mb: 3,
-                boxShadow: '0 8px 32px rgba(103, 80, 164, 0.3)'
+                mb: 4,
+                bgcolor: 'secondary.main',
+                border: '2px solid #2d3136',
               }}
             >
-              <BookIcon sx={{ fontSize: 60, color: 'white' }} />
-            </Box>
+              <CollectionsIcon sx={{ fontSize: 60, color: 'primary.main' }} />
+            </Paper>
             
             <Typography 
-              variant="h4" 
+              variant="h3" 
               gutterBottom
               sx={{ 
-                fontWeight: 600,
+                fontWeight: 300,
                 color: 'text.primary',
-                mb: 1
+                mb: 2,
+                fontSize: { xs: '2rem', md: '2.5rem' }
               }}
             >
               Welcome to CleverFerret
             </Typography>
             
             <Typography 
-              variant="body1" 
+              variant="h6" 
               color="text.secondary" 
               mb={4}
               sx={{ 
+                fontWeight: 300,
                 lineHeight: 1.6,
-                fontSize: '1.1rem'
+                opacity: 0.8
               }}
             >
-              Your personal universal media library. Create your first library to start organizing your books, movies, music, and more.
+              Create your first media library to start organizing your books, movies, music, and more.
             </Typography>
             
             <Button
@@ -584,17 +588,16 @@ export const LibraryListScreen: React.FC = () => {
               startIcon={<AddIcon />}
               onClick={() => setShowDialog(true)}
               sx={{
-                borderRadius: 3,
+                borderRadius: 2,
                 px: 4,
                 py: 1.5,
                 fontSize: '1rem',
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #6750A4 0%, #7C4DFF 100%)',
-                boxShadow: '0 4px 16px rgba(103, 80, 164, 0.3)',
+                fontWeight: 500,
+                bgcolor: 'primary.main',
+                color: 'black',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #5A47A0 0%, #7043F5 100%)',
+                  bgcolor: 'primary.light',
                   transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 20px rgba(103, 80, 164, 0.4)',
                 }
               }}
             >
@@ -602,33 +605,57 @@ export const LibraryListScreen: React.FC = () => {
             </Button>
             
             <Typography 
-              variant="caption" 
+              variant="body2" 
               color="text.secondary" 
               mt={3}
-              sx={{ opacity: 0.7 }}
+              sx={{ opacity: 0.6 }}
             >
               You can also import an existing Calibre library from the menu above
             </Typography>
           </Box>
         ) : (
-          <Grid container spacing={3} sx={{ pb: 10 }}>
-            {libraries.map((library) => (
-              <Grid 
-                item 
-                xs={12} 
-                sm={6} 
-                md={4} 
-                lg={3} 
-                xl={2.4}
-                key={library.libraryId}
+          <>
+            {/* Libraries header */}
+            <Box sx={{ mb: 4 }}>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 300, 
+                  mb: 1,
+                  color: 'text.primary'
+                }}
               >
-                <LibraryCard
-                  library={library}
-                  onClick={() => navigate(`/library/${library.libraryId}`)}
-                />
-              </Grid>
-            ))}
-          </Grid>
+                Your Libraries
+              </Typography>
+              <Typography 
+                variant="body1" 
+                color="text.secondary"
+                sx={{ opacity: 0.8 }}
+              >
+                {libraries.length} {libraries.length === 1 ? 'library' : 'libraries'}
+              </Typography>
+            </Box>
+
+            {/* Libraries grid */}
+            <Grid container spacing={3} sx={{ pb: { xs: 8, md: 4 } }}>
+              {libraries.map((library) => (
+                <Grid 
+                  item 
+                  xs={12} 
+                  sm={6} 
+                  md={4} 
+                  lg={3} 
+                  xl={2.4}
+                  key={library.libraryId}
+                >
+                  <LibraryCard
+                    library={library}
+                    onClick={() => navigate(`/library/${library.libraryId}`)}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          </>
         )}
       </Box>
 
