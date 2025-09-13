@@ -659,21 +659,21 @@ export const LibraryListScreen: React.FC = () => {
         )}
       </Box>
 
+      {/* Floating Action Button */}
       <Fab
-        color="primary"
-        aria-label="add"
+        aria-label="add library"
         sx={{
           position: 'fixed',
           bottom: 24,
           right: 24,
-          background: 'linear-gradient(135deg, #6750A4 0%, #7C4DFF 100%)',
-          boxShadow: '0 8px 24px rgba(103, 80, 164, 0.3)',
+          bgcolor: 'primary.main',
+          color: 'black',
           '&:hover': {
-            background: 'linear-gradient(135deg, #5A47A0 0%, #7043F5 100%)',
+            bgcolor: 'primary.light',
             transform: 'scale(1.05)',
-            boxShadow: '0 12px 32px rgba(103, 80, 164, 0.4)',
           },
-          transition: 'all 0.3s ease-in-out'
+          transition: 'all 0.3s ease',
+          boxShadow: '0 8px 24px rgba(229, 160, 13, 0.3)',
         }}
         onClick={() => setShowDialog(true)}
       >
