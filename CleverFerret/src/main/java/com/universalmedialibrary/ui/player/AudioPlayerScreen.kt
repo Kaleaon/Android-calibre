@@ -25,7 +25,7 @@ import com.universalmedialibrary.ui.theme.PlexTheme
 import java.util.Locale
 
 /**
- * Audio player screen for music and audiobooks
+ * Enhanced Audio player screen for music and audiobooks with Plex styling
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,29 +34,54 @@ fun AudioPlayerScreen(
     onBack: () -> Unit,
     viewModel: AudioPlayerViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
+    PlexTheme {
+        val uiState by viewModel.uiState.collectAsState()
+        val context = LocalContext.current
+        var isFavorite by remember { mutableStateOf(false) }
+        var volume by remember { mutableFloatStateOf(0.8f) }
 
-    LaunchedEffect(audioFilePath) {
-        viewModel.loadAudio(context, audioFilePath)
-    }
+        LaunchedEffect(audioFilePath) {
+            viewModel.loadAudio(context, audioFilePath)
+        }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        text = uiState.title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.background
+                        )
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+                )
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Top bar
+                TopAppBar(
+                    title = { 
+                        Text(
+                            text = "Now Playing",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { /* More options */ }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent
+                    )
+                )
         }
     ) { paddingValues ->
         Column(
